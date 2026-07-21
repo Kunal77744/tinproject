@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta
       name="description"
-      content="TinProject helps App Inventor makers plan, inspect, and troubleshoot TinyDB data."
+      content="TinyDB Inspector helps App Inventor makers plan, inspect, and troubleshoot TinyDB data."
     >
-    <title>TinProject | TinyDB tools for App Inventor</title>
+    <title>TinyDB Inspector | TinyDB tools for App Inventor</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316724a'/%3E%3Cpath d='M9 10h14v4H9zm0 8h9v4H9z' fill='%23f7f5ef'/%3E%3C/svg%3E"
@@ -55,22 +55,85 @@
         flex-direction: column;
       }
 
+      .site-header {
+        width: min(1180px, calc(100% - 48px));
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        margin: 0 auto;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
       .hero {
         width: min(1180px, calc(100% - 48px));
         flex: 1;
         margin: 0 auto;
-        padding: 48px 0 56px;
+        padding: 80px 0 72px;
       }
 
       .brand {
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 80px;
         font-size: 0.95rem;
         font-weight: 700;
         letter-spacing: -0.01em;
         text-decoration: none;
+      }
+
+      .site-nav {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .nav-link,
+      .footer-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 650;
+        text-decoration: none;
+        transition: color 160ms ease-out;
+      }
+
+      .nav-link:hover,
+      .footer-link:hover {
+        color: var(--ink);
+      }
+
+      .header-cta {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 17px;
+        border: 1px solid var(--accent);
+        border-radius: 9px;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 750;
+        text-decoration: none;
+        transition:
+          background-color 160ms ease-out,
+          border-color 160ms ease-out,
+          transform 160ms ease-out;
+      }
+
+      .header-cta:hover {
+        border-color: var(--accent-strong);
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .header-cta:active {
+        transform: translateY(0);
       }
 
       .brand-mark {
@@ -191,6 +254,10 @@
       }
 
       .primary-cta:focus-visible,
+      .brand:focus-visible,
+      .nav-link:focus-visible,
+      .header-cta:focus-visible,
+      .footer-link:focus-visible,
       .footer-credit:focus-visible {
         outline: 3px solid rgba(22, 114, 74, 0.32);
         outline-offset: 4px;
@@ -211,6 +278,7 @@
         border-radius: 24px;
         background: var(--surface);
         overflow: hidden;
+        scroll-margin-top: 24px;
       }
 
       .data-map::before {
@@ -367,16 +435,48 @@
 
       footer {
         width: min(1180px, calc(100% - 48px));
-        display: flex;
-        justify-content: flex-end;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 32px;
         margin: 0 auto;
-        padding: 0 0 24px;
+        padding: 28px 0 32px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 7px;
+      }
+
+      .footer-brand a {
+        width: fit-content;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.08rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .footer-brand span {
+        max-width: 42ch;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px 20px;
       }
 
       .footer-credit {
         display: inline-flex;
         align-items: center;
         gap: 0.42em;
+        min-height: 44px;
         color: var(--muted);
         font-size: 0.72rem;
         text-decoration: none;
@@ -395,11 +495,7 @@
 
       @media (max-width: 900px) {
         .hero {
-          padding-top: 32px;
-        }
-
-        .brand {
-          margin-bottom: 64px;
+          padding-top: 64px;
         }
 
         .hero-grid {
@@ -417,17 +513,33 @@
       }
 
       @media (max-width: 560px) {
+        .site-header,
         .hero,
         footer {
           width: min(100% - 32px, 1180px);
         }
 
-        .hero {
-          padding: 24px 0 40px;
+        .site-header {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 12px 16px;
+          padding: 16px 0;
         }
 
-        .brand {
-          margin-bottom: 56px;
+        .site-nav {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-self: stretch;
+          justify-content: space-between;
+          gap: 16px;
+          padding-top: 4px;
+        }
+
+        .header-cta {
+          padding: 0 14px;
+        }
+
+        .hero {
+          padding: 48px 0 56px;
         }
 
         h1 {
@@ -475,25 +587,51 @@
         }
 
         footer {
+          grid-template-columns: 1fr;
+          align-items: start;
+          gap: 16px;
+        }
+
+        .footer-links {
           justify-content: flex-start;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .primary-cta {
+        .primary-cta,
+        .header-cta,
+        .nav-link,
+        .footer-link {
           transition: none;
         }
       }
     </style>
   </head>
-  <body>
+  <body id="top">
     <div class="page">
-      <main class="hero">
-        <a class="brand" href="/" aria-label="TinProject home">
+      <header class="site-header">
+        <a class="brand" href="#top" aria-label="TinyDB Inspector home">
           <span class="brand-mark" aria-hidden="true"></span>
-          <span>TinProject</span>
+          <span>TinyDB Inspector</span>
         </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a class="nav-link" href="#how-it-works">How it works</a>
+          <a
+            class="nav-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+          >
+            Support
+          </a>
+        </nav>
+        <a
+          class="header-cta"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20early%20access"
+        >
+          Join early access
+        </a>
+      </header>
 
+      <main class="hero">
         <div class="hero-grid">
           <section aria-labelledby="hero-title">
             <p class="eyebrow">TinyDB tools for App Inventor</p>
@@ -505,7 +643,7 @@
             <div class="cta-wrap">
               <a
                 class="primary-cta"
-                href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinProject%20early%20access"
+                href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20early%20access"
               >
                 Join early access
               </a>
@@ -513,7 +651,11 @@
             </div>
           </section>
 
-          <aside class="data-map" aria-label="Example map of TinyDB tags across app screens">
+          <aside
+            id="how-it-works"
+            class="data-map"
+            aria-label="Example map of TinyDB tags across app screens"
+          >
             <div class="map-window">
               <div class="map-bar">
                 <span>tinydb / project-map</span>
@@ -552,10 +694,28 @@
       </main>
 
       <footer>
-        <a class="footer-credit" href="https://tin.computer">
-          <span class="tin-mark" aria-hidden="true"></span>
-          Growth by Tin
-        </a>
+        <div class="footer-brand">
+          <a href="#top">TinyDB Inspector</a>
+          <span>A focused TinyDB toolkit for App Inventor makers.</span>
+        </div>
+        <div class="footer-links" aria-label="Footer navigation">
+          <a
+            class="footer-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+          >
+            tinproject-ydbq@mail.tin.computer
+          </a>
+          <a
+            class="footer-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20privacy%20question"
+          >
+            Privacy questions
+          </a>
+          <a class="footer-credit" href="https://tin.computer">
+            <span class="tin-mark" aria-hidden="true"></span>
+            Growth by Tin
+          </a>
+        </div>
       </footer>
     </div>
   </body>
