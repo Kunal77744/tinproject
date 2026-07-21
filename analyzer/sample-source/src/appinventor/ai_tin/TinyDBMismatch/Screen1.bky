@@ -1,0 +1,8 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="store-profile" x="24" y="24">
+    <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="StoreValue" is_generic="false"></mutation>
+    <field name="COMPONENT_SELECTOR">TinyDB1</field>
+    <value name="ARG0"><block type="text" id="tag-one"><field name="TEXT">profile_name</field></block></value>
+    <value name="ARG1"><block type="text" id="value-one"><field name="TEXT">Ada</field></block></value>
+  </block>
+</xml>

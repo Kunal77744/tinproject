@@ -1,0 +1,8 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="get-profile" x="24" y="24">
+    <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="GetValue" is_generic="false"></mutation>
+    <field name="COMPONENT_SELECTOR">TinyDB1</field>
+    <value name="ARG0"><block type="text" id="tag-two"><field name="TEXT">profile-name</field></block></value>
+    <value name="ARG1"><block type="text" id="default-two"><field name="TEXT">Unknown</field></block></value>
+  </block>
+</xml>
