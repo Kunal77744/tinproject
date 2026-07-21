@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="TinyDB UI for App Inventor and Kodular: map tags across screens, catch risky data mistakes, and turn hidden TinyDB behavior into a repair checklist."
+    >
+    <link rel="canonical" href="https://tinproject-ydbq.vercel.app/tinydb-ui/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="TinyDB UI for App Inventor | TinyDB Inspector">
+    <meta
+      property="og:description"
+      content="See every TinyDB tag, where it is used, and what needs fixing before hidden data bugs reach your users."
+    >
+    <meta property="og:url" content="https://tinproject-ydbq.vercel.app/tinydb-ui/">
+    <title>TinyDB UI for App Inventor | TinyDB Inspector</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316724a'/%3E%3Cpath d='M9 10h14v4H9zm0 8h9v4H9z' fill='%23f7f5ef'/%3E%3C/svg%3E"
+    >
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "TinyDB Inspector",
+        "url": "https://tinproject-ydbq.vercel.app/tinydb-ui/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "description": "A privacy-first TinyDB UI for App Inventor and Kodular projects that maps tags across screens, highlights likely data mistakes, and produces a repair checklist.",
+        "featureList": [
+          "Map TinyDB tags across app screens",
+          "Flag inconsistent names, types, and defaults",
+          "Identify destructive clear operations",
+          "Export a focused repair checklist"
+        ]
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f7f5ef;
+        --surface: #fffdf8;
+        --surface-strong: #eef5ef;
+        --ink: #142820;
+        --muted: #596a62;
+        --line: #cdd8d0;
+        --accent: #16724a;
+        --accent-strong: #0f5a39;
+        --accent-soft: #dcebe1;
+        --warning: #a95f2c;
+        --warning-soft: #fff0e2;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        background: var(--canvas);
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 48px));
+        margin-inline: auto;
+      }
+
+      .site-header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--accent);
+      }
+
+      .brand-mark::before,
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        left: 7px;
+        height: 3px;
+        border-radius: 999px;
+        background: var(--surface);
+      }
+
+      .brand-mark::before {
+        top: 8px;
+        width: 14px;
+      }
+
+      .brand-mark::after {
+        top: 16px;
+        width: 9px;
+      }
+
+      .site-nav {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .nav-link,
+      .footer-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .nav-link[aria-current="page"] {
+        color: var(--ink);
+      }
+
+      .header-cta,
+      .primary-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--accent);
+        border-radius: 9px;
+        color: #fff;
+        background: var(--accent);
+        font-weight: 750;
+        text-decoration: none;
+        transition: background-color 160ms ease-out, transform 160ms ease-out;
+      }
+
+      .header-cta {
+        min-height: 44px;
+        padding: 0 17px;
+        font-size: 0.85rem;
+      }
+
+      .primary-cta {
+        min-height: 54px;
+        gap: 14px;
+        padding: 0 23px;
+        font-size: 0.96rem;
+      }
+
+      .primary-cta::after {
+        content: "→";
+        font-size: 1.1rem;
+      }
+
+      .header-cta:hover,
+      .primary-cta:hover {
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .brand:focus-visible,
+      .nav-link:focus-visible,
+      .header-cta:focus-visible,
+      .primary-cta:focus-visible,
+      .footer-link:focus-visible,
+      .footer-credit:focus-visible {
+        outline: 3px solid rgba(22, 114, 74, 0.32);
+        outline-offset: 4px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.94fr) minmax(430px, 1.06fr);
+        gap: 64px;
+        align-items: center;
+        padding: 82px 0 88px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 22px;
+        color: var(--accent-strong);
+        font-size: 0.78rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: currentColor;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 500;
+        letter-spacing: -0.045em;
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 10ch;
+        margin-bottom: 30px;
+        font-size: clamp(3.5rem, 6.6vw, 6.5rem);
+        line-height: 0.94;
+      }
+
+      .subhead {
+        max-width: 56ch;
+        margin-bottom: 38px;
+        color: var(--muted);
+        font-size: clamp(1.04rem, 1.45vw, 1.22rem);
+        line-height: 1.6;
+      }
+
+      .cta-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .cta-note {
+        max-width: 18ch;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .inspector {
+        position: relative;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--surface);
+        box-shadow: 0 30px 70px rgba(20, 40, 32, 0.08);
+        overflow: hidden;
+      }
+
+      .inspector::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.26;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: linear-gradient(to bottom, black, transparent 70%);
+        pointer-events: none;
+      }
+
+      .app-window {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.96);
+        overflow: hidden;
+      }
+
+      .app-bar {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .privacy-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .privacy-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .app-body {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        min-height: 366px;
+      }
+
+      .screens {
+        padding: 14px 10px;
+        border-right: 1px solid var(--line);
+        background: var(--surface-strong);
+      }
+
+      .screen-label {
+        margin: 0 6px 10px;
+        color: var(--muted);
+        font-size: 0.64rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .screen {
+        display: block;
+        margin-bottom: 6px;
+        padding: 10px;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 0.73rem;
+      }
+
+      .screen.active {
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-weight: 750;
+      }
+
+      .tag-panel {
+        padding: 18px;
+      }
+
+      .panel-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel-heading strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.12rem;
+      }
+
+      .panel-heading span {
+        color: var(--muted);
+        font-size: 0.68rem;
+      }
+
+      .tag-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 2px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tag-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.79rem;
+        font-weight: 700;
+      }
+
+      .tag-type {
+        color: var(--muted);
+        font-size: 0.69rem;
+      }
+
+      .tag-icon {
+        flex: 0 0 auto;
+        width: 27px;
+        height: 27px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-size: 0.66rem;
+      }
+
+      .tag-icon.warn {
+        color: var(--warning);
+        background: var(--warning-soft);
+      }
+
+      .issue-card {
+        position: relative;
+        width: calc(100% - 52px);
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        margin: -14px auto 0;
+        padding: 15px 16px;
+        border: 1px solid #e4b78e;
+        border-radius: 14px;
+        background: var(--warning-soft);
+      }
+
+      .issue-card strong {
+        display: block;
+        margin-bottom: 3px;
+        color: #713b1f;
+        font-size: 0.78rem;
+      }
+
+      .issue-card span {
+        color: #865338;
+        font-size: 0.7rem;
+        line-height: 1.4;
+      }
+
+      .issue-count {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        background: var(--warning);
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .section {
+        padding: 92px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1.18fr);
+        gap: 70px;
+        align-items: end;
+        margin-bottom: 48px;
+      }
+
+      h2 {
+        max-width: 12ch;
+        margin-bottom: 0;
+        font-size: clamp(2.55rem, 4.8vw, 4.55rem);
+        line-height: 0.98;
+      }
+
+      .section-heading p {
+        max-width: 56ch;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid var(--line);
+      }
+
+      .feature {
+        padding: 30px 30px 8px 0;
+        border-right: 1px solid var(--line);
+      }
+
+      .feature + .feature {
+        padding-left: 30px;
+      }
+
+      .feature:last-child {
+        border-right: 0;
+      }
+
+      .feature-number {
+        display: block;
+        margin-bottom: 54px;
+        color: var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .feature h3 {
+        margin-bottom: 13px;
+        font-size: 1.05rem;
+      }
+
+      .feature p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.87rem;
+        line-height: 1.6;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .step {
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+      }
+
+      .step > span {
+        color: var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .step h3 {
+        max-width: 16ch;
+        margin-bottom: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.55rem;
+        font-weight: 500;
+        line-height: 1.08;
+      }
+
+      .step p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.55;
+      }
+
+      .final-cta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 40px;
+        align-items: center;
+        margin: 92px 0;
+        padding: 42px;
+        border-radius: 22px;
+        color: #fff;
+        background: var(--ink);
+      }
+
+      .final-cta h2 {
+        max-width: 15ch;
+        margin-bottom: 12px;
+        color: #fff;
+        font-size: clamp(2.25rem, 4vw, 3.8rem);
+      }
+
+      .final-cta p {
+        max-width: 54ch;
+        margin-bottom: 0;
+        color: #b9c5bf;
+        line-height: 1.55;
+      }
+
+      .final-cta .primary-cta {
+        color: var(--ink);
+        background: #81e5ae;
+        border-color: #81e5ae;
+      }
+
+      footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 32px;
+        padding: 28px 0 32px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 7px;
+      }
+
+      .footer-brand a {
+        width: fit-content;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.08rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .footer-brand span {
+        max-width: 42ch;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px 20px;
+      }
+
+      .footer-credit {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42em;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-decoration: none;
+      }
+
+      .tin-mark {
+        width: 0.9em;
+        height: 0.9em;
+        background: #66dc9d;
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 54px;
+          padding-top: 64px;
+        }
+
+        h1 {
+          max-width: 11ch;
+        }
+
+        .section-heading {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        .feature-number {
+          margin-bottom: 34px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .shell {
+          width: min(100% - 32px, 1180px);
+        }
+
+        .site-header {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 12px 16px;
+          padding: 16px 0;
+        }
+
+        .site-nav {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-self: stretch;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .site-nav .nav-link:last-child {
+          display: none;
+        }
+
+        .hero {
+          padding: 50px 0 64px;
+        }
+
+        h1 {
+          font-size: clamp(3.15rem, 16vw, 4.7rem);
+        }
+
+        .cta-row {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .cta-note {
+          max-width: none;
+        }
+
+        .inspector {
+          padding: 10px;
+          border-radius: 18px;
+        }
+
+        .app-body {
+          grid-template-columns: 82px minmax(0, 1fr);
+        }
+
+        .screens {
+          padding-inline: 6px;
+        }
+
+        .screen {
+          padding-inline: 7px;
+          font-size: 0.66rem;
+        }
+
+        .tag-panel {
+          padding: 14px 12px;
+        }
+
+        .tag-name {
+          font-size: 0.68rem;
+        }
+
+        .tag-type,
+        .panel-heading span {
+          display: none;
+        }
+
+        .issue-card {
+          width: calc(100% - 20px);
+        }
+
+        .section {
+          padding: 70px 0;
+        }
+
+        .feature-grid,
+        .steps {
+          grid-template-columns: 1fr;
+        }
+
+        .feature,
+        .feature + .feature {
+          padding: 28px 0;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .feature-number {
+          margin-bottom: 22px;
+        }
+
+        .step {
+          min-height: 220px;
+        }
+
+        .final-cta {
+          grid-template-columns: 1fr;
+          margin: 64px 0;
+          padding: 30px 24px;
+        }
+
+        footer {
+          grid-template-columns: 1fr;
+          align-items: start;
+          gap: 16px;
+        }
+
+        .footer-links {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .header-cta,
+        .primary-cta {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body id="top">
+    <header class="site-header shell">
+      <a class="brand" href="/" aria-label="TinyDB Inspector home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>TinyDB Inspector</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="nav-link" href="/tinydb-ui/" aria-current="page">TinyDB UI</a>
+        <a class="nav-link" href="#what-it-finds">What it finds</a>
+        <a class="nav-link" href="#how-it-works">How it works</a>
+      </nav>
+      <a
+        class="header-cta"
+        href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
+      >
+        Join early access
+      </a>
+    </header>
+
+    <main>
+      <section class="hero shell" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">TinyDB UI for App Inventor</p>
+          <h1 id="hero-title">A TinyDB UI for the data your blocks hide.</h1>
+          <p class="subhead">
+            Map every TinyDB tag across your App Inventor or Kodular project,
+            catch mismatched names and risky clears, then leave with a focused
+            repair checklist. Your project stays in your browser.
+          </p>
+          <div class="cta-row">
+            <a
+              class="primary-cta"
+              href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
+            >
+              Join early access
+            </a>
+            <span class="cta-note">Help shape the first working release.</span>
+          </div>
+        </div>
+
+        <aside class="inspector" aria-label="Preview of the TinyDB Inspector interface">
+          <div class="app-window">
+            <div class="app-bar">
+              <span>project / travel-buddy.aia</span>
+              <span class="privacy-status">local analysis</span>
+            </div>
+            <div class="app-body">
+              <div class="screens" aria-label="Project screens">
+                <p class="screen-label">Screens</p>
+                <span class="screen active">Screen1</span>
+                <span class="screen">Profile</span>
+                <span class="screen">Settings</span>
+              </div>
+              <div class="tag-panel">
+                <div class="panel-heading">
+                  <strong>TinyDB tags</strong>
+                  <span>4 found · 1 issue</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">Aa</span>traveler_name</span>
+                  <span class="tag-type">text · 3 uses</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">[ ]</span>saved_trips</span>
+                  <span class="tag-type">list · 5 uses</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon warn">!</span>savedTrips</span>
+                  <span class="tag-type">possible mismatch</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">01</span>dark_mode</span>
+                  <span class="tag-type">boolean · 2 uses</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="issue-card">
+            <span class="issue-count">1</span>
+            <span>
+              <strong>Tag name may not match</strong>
+              “savedTrips” appears once while “saved_trips” is used on two screens.
+            </span>
+          </div>
+        </aside>
+      </section>
+
+      <section id="what-it-finds" class="section shell" aria-labelledby="finds-title">
+        <div class="section-heading">
+          <h2 id="finds-title">One view of every hidden connection.</h2>
+          <p>
+            TinyDB works quietly behind your blocks. That makes it useful, but
+            also makes small naming and type mistakes hard to trace. The TinyDB
+            UI turns those scattered reads and writes into one understandable map.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <span class="feature-number">01 / MAP</span>
+            <h3>Follow tags across screens</h3>
+            <p>See where each value is stored, retrieved, cleared, and reused across your project.</p>
+          </article>
+          <article class="feature">
+            <span class="feature-number">02 / CHECK</span>
+            <h3>Spot likely mistakes</h3>
+            <p>Surface inconsistent names, unexpected types, missing defaults, and destructive clears.</p>
+          </article>
+          <article class="feature">
+            <span class="feature-number">03 / REPAIR</span>
+            <h3>Fix the right blocks first</h3>
+            <p>Turn the findings into a practical checklist you can follow inside App Inventor or Kodular.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="section shell" aria-labelledby="process-title">
+        <div class="section-heading">
+          <h2 id="process-title">A clearer path from file to fix.</h2>
+          <p>
+            The first release is being built around a simple, private workflow.
+            No migration, browser extension, or cloud project setup is planned.
+          </p>
+        </div>
+        <div class="steps">
+          <article class="step">
+            <span>STEP 01</span>
+            <div>
+              <h3>Choose your .aia project</h3>
+              <p>Open the exported App Inventor or Kodular project you already use.</p>
+            </div>
+          </article>
+          <article class="step">
+            <span>STEP 02</span>
+            <div>
+              <h3>Analyze it in your browser</h3>
+              <p>The planned workflow reads project structure locally so your source file does not need to be uploaded.</p>
+            </div>
+          </article>
+          <article class="step">
+            <span>STEP 03</span>
+            <div>
+              <h3>Work through the repair list</h3>
+              <p>Review the tag map and address the most likely data bugs first.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="final-cta shell" aria-labelledby="access-title">
+        <div>
+          <h2 id="access-title">Make TinyDB easier to trust.</h2>
+          <p>
+            Join early access to see the first working build and tell us which
+            TinyDB problems cost you the most debugging time.
+          </p>
+        </div>
+        <a
+          class="primary-cta"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
+        >
+          Join early access
+        </a>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <div class="footer-brand">
+        <a href="/">TinyDB Inspector</a>
+        <span>A privacy-first TinyDB toolkit for App Inventor and Kodular makers.</span>
+      </div>
+      <div class="footer-links" aria-label="Footer navigation">
+        <a
+          class="footer-link"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+        >
+          Support
+        </a>
+        <a
+          class="footer-link"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20privacy%20question"
+        >
+          Privacy questions
+        </a>
+        <a class="footer-credit" href="https://tin.computer">
+          <span class="tin-mark" aria-hidden="true"></span>
+          Growth by Tin
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>
