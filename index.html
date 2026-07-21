@@ -27,5 +27,726 @@
         Growth by Tin
       </a>
     </footer>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="TinyDB Inspector helps App Inventor makers plan, inspect, and troubleshoot TinyDB data."
+    >
+    <title>TinyDB Inspector | TinyDB tools for App Inventor</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316724a'/%3E%3Cpath d='M9 10h14v4H9zm0 8h9v4H9z' fill='%23f7f5ef'/%3E%3C/svg%3E"
+    >
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f7f5ef;
+        --surface: #fffdf8;
+        --surface-strong: #eef5ef;
+        --ink: #142820;
+        --muted: #596a62;
+        --line: #cdd8d0;
+        --accent: #16724a;
+        --accent-strong: #0f5a39;
+        --accent-soft: #dcebe1;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--canvas);
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .site-header {
+        width: min(1180px, calc(100% - 48px));
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        margin: 0 auto;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero {
+        width: min(1180px, calc(100% - 48px));
+        flex: 1;
+        margin: 0 auto;
+        padding: 80px 0 72px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        text-decoration: none;
+      }
+
+      .site-nav {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .nav-link,
+      .footer-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 650;
+        text-decoration: none;
+        transition: color 160ms ease-out;
+      }
+
+      .nav-link:hover,
+      .footer-link:hover {
+        color: var(--ink);
+      }
+
+      .header-cta {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 17px;
+        border: 1px solid var(--accent);
+        border-radius: 9px;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 750;
+        text-decoration: none;
+        transition:
+          background-color 160ms ease-out,
+          border-color 160ms ease-out,
+          transform 160ms ease-out;
+      }
+
+      .header-cta:hover {
+        border-color: var(--accent-strong);
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .header-cta:active {
+        transform: translateY(0);
+      }
+
+      .brand-mark {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--accent);
+      }
+
+      .brand-mark::before,
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        left: 7px;
+        height: 3px;
+        border-radius: 999px;
+        background: var(--surface);
+      }
+
+      .brand-mark::before {
+        top: 8px;
+        width: 14px;
+      }
+
+      .brand-mark::after {
+        top: 16px;
+        width: 9px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.02fr) minmax(400px, 0.98fr);
+        gap: 72px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 24px;
+        color: var(--accent-strong);
+        font-size: 0.78rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: currentColor;
+      }
+
+      h1 {
+        max-width: 9.5ch;
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(3.5rem, 7.3vw, 6.85rem);
+        font-weight: 500;
+        line-height: 0.92;
+        letter-spacing: -0.055em;
+        text-wrap: balance;
+      }
+
+      .subhead {
+        max-width: 57ch;
+        margin: 32px 0 0;
+        color: var(--muted);
+        font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+        line-height: 1.58;
+        text-wrap: pretty;
+      }
+
+      .cta-wrap {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-top: 40px;
+      }
+
+      .primary-cta {
+        min-height: 52px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 0 22px;
+        border: 1px solid var(--accent);
+        border-radius: 10px;
+        color: #ffffff;
+        background: var(--accent);
+        font-size: 0.95rem;
+        font-weight: 750;
+        text-decoration: none;
+        transition:
+          background-color 160ms ease-out,
+          border-color 160ms ease-out,
+          transform 160ms ease-out;
+      }
+
+      .primary-cta::after {
+        content: "→";
+        font-size: 1.1rem;
+        line-height: 1;
+      }
+
+      .primary-cta:hover {
+        border-color: var(--accent-strong);
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .primary-cta:active {
+        transform: translateY(0);
+      }
+
+      .primary-cta:focus-visible,
+      .brand:focus-visible,
+      .nav-link:focus-visible,
+      .header-cta:focus-visible,
+      .footer-link:focus-visible,
+      .footer-credit:focus-visible {
+        outline: 3px solid rgba(22, 114, 74, 0.32);
+        outline-offset: 4px;
+      }
+
+      .cta-note {
+        max-width: 16ch;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      .data-map {
+        position: relative;
+        min-height: 506px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--surface);
+        overflow: hidden;
+        scroll-margin-top: 24px;
+      }
+
+      .data-map::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.32;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: linear-gradient(to bottom, black, transparent 72%);
+        pointer-events: none;
+      }
+
+      .map-window {
+        position: relative;
+        z-index: 1;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.94);
+        overflow: hidden;
+      }
+
+      .map-bar {
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .map-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .map-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .map-body {
+        padding: 16px;
+      }
+
+      .tag-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 15px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tag-row:last-child {
+        border-bottom: 0;
+      }
+
+      .tag-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.83rem;
+        font-weight: 700;
+      }
+
+      .tag-icon {
+        flex: 0 0 auto;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-size: 0.7rem;
+      }
+
+      .tag-type {
+        color: var(--muted);
+        font-size: 0.73rem;
+      }
+
+      .flow-card {
+        position: relative;
+        z-index: 2;
+        width: calc(100% - 48px);
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+        gap: 8px;
+        margin: -4px auto 0;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface-strong);
+      }
+
+      .flow-step {
+        color: var(--muted);
+        font-size: 0.7rem;
+        line-height: 1.35;
+        text-align: center;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+        font-size: 0.8rem;
+      }
+
+      .flow-arrow {
+        color: var(--accent);
+        font-size: 1rem;
+      }
+
+      .map-caption {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 28px 8px 4px;
+      }
+
+      .map-caption strong {
+        max-width: 12ch;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.65rem;
+        font-weight: 500;
+        line-height: 1.06;
+      }
+
+      .map-caption span {
+        max-width: 19ch;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.45;
+        text-align: right;
+      }
+
+      footer {
+        width: min(1180px, calc(100% - 48px));
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 32px;
+        margin: 0 auto;
+        padding: 28px 0 32px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 7px;
+      }
+
+      .footer-brand a {
+        width: fit-content;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.08rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .footer-brand span {
+        max-width: 42ch;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px 20px;
+      }
+
+      .footer-credit {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42em;
+        min-height: 44px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-decoration: none;
+      }
+
+      .footer-credit:hover {
+        color: var(--ink);
+      }
+
+      .tin-mark {
+        width: 0.9em;
+        height: 0.9em;
+        display: inline-block;
+        background: #66dc9d;
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          padding-top: 64px;
+        }
+
+        .hero-grid {
+          grid-template-columns: 1fr;
+          gap: 56px;
+        }
+
+        h1 {
+          max-width: 10ch;
+        }
+
+        .data-map {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .site-header,
+        .hero,
+        footer {
+          width: min(100% - 32px, 1180px);
+        }
+
+        .site-header {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 12px 16px;
+          padding: 16px 0;
+        }
+
+        .site-nav {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-self: stretch;
+          justify-content: space-between;
+          gap: 16px;
+          padding-top: 4px;
+        }
+
+        .header-cta {
+          padding: 0 14px;
+        }
+
+        .hero {
+          padding: 48px 0 56px;
+        }
+
+        h1 {
+          font-size: clamp(3.15rem, 16vw, 4.6rem);
+        }
+
+        .subhead {
+          margin-top: 24px;
+        }
+
+        .cta-wrap {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-top: 32px;
+        }
+
+        .cta-note {
+          max-width: none;
+        }
+
+        .data-map {
+          padding: 12px;
+          border-radius: 18px;
+        }
+
+        .flow-card {
+          width: calc(100% - 16px);
+          padding: 14px 8px;
+        }
+
+        .flow-step span {
+          display: none;
+        }
+
+        .map-caption {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 12px;
+          padding: 24px 4px 8px;
+        }
+
+        .map-caption span {
+          max-width: 28ch;
+          text-align: left;
+        }
+
+        footer {
+          grid-template-columns: 1fr;
+          align-items: start;
+          gap: 16px;
+        }
+
+        .footer-links {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .primary-cta,
+        .header-cta,
+        .nav-link,
+        .footer-link {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body id="top">
+    <div class="page">
+      <header class="site-header">
+        <a class="brand" href="#top" aria-label="TinyDB Inspector home">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>TinyDB Inspector</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a class="nav-link" href="/tinydb-ui/">TinyDB UI</a>
+          <a class="nav-link" href="#how-it-works">How it works</a>
+          <a
+            class="nav-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+          >
+            Support
+          </a>
+        </nav>
+        <a
+          class="header-cta"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20early%20access"
+        >
+          Join early access
+        </a>
+      </header>
+
+      <main class="hero">
+        <div class="hero-grid">
+          <section aria-labelledby="hero-title">
+            <p class="eyebrow">TinyDB tools for App Inventor</p>
+            <h1 id="hero-title">See what your app remembers.</h1>
+            <p class="subhead">
+              A focused toolkit for App Inventor makers to plan, inspect, and
+              troubleshoot TinyDB data without the usual guesswork.
+            </p>
+            <div class="cta-wrap">
+              <a
+                class="primary-cta"
+                href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20early%20access"
+              >
+                Join early access
+              </a>
+              <span class="cta-note">Help shape the first release.</span>
+            </div>
+          </section>
+
+          <aside
+            id="how-it-works"
+            class="data-map"
+            aria-label="Example map of TinyDB tags across app screens"
+          >
+            <div class="map-window">
+              <div class="map-bar">
+                <span>tinydb / project-map</span>
+                <span class="map-status">persistent</span>
+              </div>
+              <div class="map-body">
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">Aa</span>player_name</span>
+                  <span class="tag-type">text</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">12</span>high_score</span>
+                  <span class="tag-type">number</span>
+                </div>
+                <div class="tag-row">
+                  <span class="tag-name"><span class="tag-icon">[ ]</span>settings</span>
+                  <span class="tag-type">list</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-card" aria-hidden="true">
+              <div class="flow-step"><strong>Screen 1</strong><span>stores a tag</span></div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-step"><strong>TinyDB</strong><span>keeps the value</span></div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-step"><strong>Screen 2</strong><span>reads it back</span></div>
+            </div>
+
+            <div class="map-caption">
+              <strong>Persistent tags. Clear structure.</strong>
+              <span>Know what is stored, where it is used, and what type to expect.</span>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer>
+        <div class="footer-brand">
+          <a href="#top">TinyDB Inspector</a>
+          <span>A focused TinyDB toolkit for App Inventor makers.</span>
+        </div>
+        <div class="footer-links" aria-label="Footer navigation">
+          <a
+            class="footer-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+          >
+            tinproject-ydbq@mail.tin.computer
+          </a>
+          <a
+            class="footer-link"
+            href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20privacy%20question"
+          >
+            Privacy questions
+          </a>
+          <a class="footer-credit" href="https://tin.computer">
+            <span class="tin-mark" aria-hidden="true"></span>
+            Growth by Tin
+          </a>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>
