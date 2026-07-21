@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="Learn TinyDB in MIT App Inventor: add the component, store a value, load it safely, share tags across screens, and avoid common mistakes."
+    >
+    <link rel="canonical" href="https://tinproject-ydbq.vercel.app/tinydb-app-inventor/">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="TinyDB App Inventor tutorial: save and load data">
+    <meta
+      property="og:description"
+      content="A practical block-by-block guide to storing, retrieving, and debugging local data with TinyDB in MIT App Inventor."
+    >
+    <meta property="og:url" content="https://tinproject-ydbq.vercel.app/tinydb-app-inventor/">
+    <title>TinyDB App Inventor tutorial: save and load data</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316724a'/%3E%3Cpath d='M9 10h14v4H9zm0 8h9v4H9z' fill='%23f7f5ef'/%3E%3C/svg%3E"
+    >
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Article",
+            "headline": "TinyDB App Inventor tutorial: save and load data",
+            "description": "A practical guide to adding TinyDB, storing values, retrieving them with a fallback, and reusing tags across screens in MIT App Inventor.",
+            "mainEntityOfPage": "https://tinproject-ydbq.vercel.app/tinydb-app-inventor/",
+            "author": {
+              "@type": "Organization",
+              "name": "TinyDB Inspector"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "TinyDB Inspector"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Does TinyDB sync data across different phones?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. TinyDB stores persistent data locally for one app on one device. Use a networked storage component such as CloudDB when different devices need shared data."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Why do I see old TinyDB values in the AI Companion?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Apps tested in the AI Companion share its TinyDB during development. Clear the Companion app's data before switching projects when old values interfere with testing."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What does valueIfTagNotThere do?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "GetValue returns valueIfTagNotThere when the requested tag has not been stored. Choose a fallback with the same type your screen expects."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Should I use ClearTag or ClearAll?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Use ClearTag to remove one named value. ClearAll removes every entry in that TinyDB data store, so reserve it for a deliberate full reset."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f7f5ef;
+        --surface: #fffdf8;
+        --surface-strong: #eef5ef;
+        --ink: #142820;
+        --muted: #596a62;
+        --line: #cdd8d0;
+        --accent: #16724a;
+        --accent-strong: #0f5a39;
+        --accent-soft: #dcebe1;
+        --block-purple: #74519b;
+        --block-green: #32865b;
+        --block-blue: #2d6f99;
+        --block-gold: #a06d24;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        background: var(--canvas);
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 48px));
+        margin-inline: auto;
+      }
+
+      .site-header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        padding: 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--accent);
+      }
+
+      .brand-mark::before,
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        left: 7px;
+        height: 3px;
+        border-radius: 999px;
+        background: var(--surface);
+      }
+
+      .brand-mark::before {
+        top: 8px;
+        width: 14px;
+      }
+
+      .brand-mark::after {
+        top: 16px;
+        width: 9px;
+      }
+
+      .site-nav {
+        justify-self: end;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .nav-link,
+      .footer-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 650;
+        text-decoration: none;
+        transition: color 160ms ease-out;
+      }
+
+      .nav-link:hover,
+      .footer-link:hover {
+        color: var(--ink);
+      }
+
+      .nav-link[aria-current="page"] {
+        color: var(--ink);
+      }
+
+      .header-cta,
+      .primary-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--accent);
+        border-radius: 9px;
+        color: #fff;
+        background: var(--accent);
+        font-weight: 750;
+        text-decoration: none;
+        transition: background-color 160ms ease-out, transform 160ms ease-out;
+      }
+
+      .header-cta {
+        min-height: 44px;
+        padding: 0 17px;
+        font-size: 0.85rem;
+      }
+
+      .primary-cta {
+        min-height: 54px;
+        gap: 14px;
+        padding: 0 23px;
+        font-size: 0.96rem;
+      }
+
+      .primary-cta::after {
+        content: "→";
+        font-size: 1.1rem;
+      }
+
+      .header-cta:hover,
+      .primary-cta:hover {
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .header-cta:active,
+      .primary-cta:active {
+        transform: translateY(0);
+      }
+
+      .brand:focus-visible,
+      .nav-link:focus-visible,
+      .header-cta:focus-visible,
+      .primary-cta:focus-visible,
+      .toc-link:focus-visible,
+      .text-link:focus-visible,
+      .footer-link:focus-visible,
+      .footer-credit:focus-visible,
+      .source-link:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid rgba(22, 114, 74, 0.32);
+        outline-offset: 4px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(440px, 1.1fr);
+        gap: 64px;
+        align-items: center;
+        padding: 78px 0 88px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 22px;
+        color: var(--accent-strong);
+        font-size: 0.78rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: currentColor;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 500;
+        letter-spacing: -0.045em;
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 10.5ch;
+        margin-bottom: 28px;
+        font-size: clamp(3.35rem, 6.4vw, 6.1rem);
+        line-height: 0.95;
+      }
+
+      .subhead {
+        max-width: 55ch;
+        margin-bottom: 34px;
+        color: var(--muted);
+        font-size: clamp(1.03rem, 1.4vw, 1.2rem);
+        line-height: 1.62;
+        text-wrap: pretty;
+      }
+
+      .primary-cta-note {
+        max-width: 46ch;
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .block-board {
+        position: relative;
+        min-height: 440px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--surface);
+        box-shadow: 0 30px 70px rgba(20, 40, 32, 0.08);
+        overflow: hidden;
+      }
+
+      .block-board::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.28;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 24px 24px;
+        mask-image: linear-gradient(to bottom, black, transparent 80%);
+        pointer-events: none;
+      }
+
+      .board-window {
+        position: relative;
+        min-height: 408px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 253, 248, 0.96);
+        overflow: hidden;
+      }
+
+      .board-bar {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .board-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .board-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .block-canvas {
+        display: grid;
+        gap: 26px;
+        padding: 34px 24px;
+      }
+
+      .block-stack {
+        display: grid;
+        gap: 5px;
+      }
+
+      .block {
+        width: fit-content;
+        max-width: 100%;
+        padding: 10px 13px;
+        border-radius: 7px;
+        color: #fff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1.35;
+        box-shadow: inset 0 -2px rgba(0, 0, 0, 0.16);
+      }
+
+      .block-event {
+        background: var(--block-gold);
+      }
+
+      .block-method {
+        margin-left: 18px;
+        background: var(--block-purple);
+      }
+
+      .block-property {
+        margin-left: 36px;
+        background: var(--block-green);
+      }
+
+      .block-value {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 3px 7px;
+        border-radius: 5px;
+        color: #fff;
+        background: var(--block-blue);
+      }
+
+      .board-note {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        width: 178px;
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--muted);
+        background: var(--surface-strong);
+        font-size: 0.76rem;
+        line-height: 1.45;
+      }
+
+      .board-note strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+      }
+
+      .article-grid {
+        display: grid;
+        grid-template-columns: 230px minmax(0, 1fr);
+        gap: 72px;
+        align-items: start;
+        padding-bottom: 104px;
+      }
+
+      .toc {
+        position: sticky;
+        top: 24px;
+        display: grid;
+        gap: 2px;
+        padding: 20px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .toc-title {
+        margin: 0 0 9px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .toc-link {
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.35;
+        text-decoration: none;
+      }
+
+      .toc-link span {
+        color: var(--accent-strong);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.68rem;
+      }
+
+      .article {
+        min-width: 0;
+      }
+
+      .quick-read {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        margin-bottom: 76px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--line);
+        overflow: hidden;
+      }
+
+      .quick-read div {
+        min-height: 112px;
+        padding: 22px;
+        background: var(--surface);
+      }
+
+      .quick-read span {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .quick-read strong {
+        display: block;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      .intro {
+        max-width: 65ch;
+        margin-bottom: 68px;
+        font-size: 1.06rem;
+        line-height: 1.72;
+      }
+
+      .step-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 28px;
+        padding: 60px 0;
+        border-top: 1px solid var(--line);
+        scroll-margin-top: 32px;
+      }
+
+      .step-number {
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.75rem;
+        font-weight: 750;
+      }
+
+      .step h2,
+      .section-title {
+        margin-bottom: 18px;
+        font-size: clamp(2.1rem, 4vw, 3.35rem);
+        line-height: 1.04;
+      }
+
+      .step-copy {
+        max-width: 64ch;
+        margin-bottom: 26px;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.68;
+        text-wrap: pretty;
+      }
+
+      .recipe {
+        display: grid;
+        gap: 10px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--surface-strong);
+      }
+
+      .recipe-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: 0.71rem;
+        font-weight: 750;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .recipe-line {
+        padding: 11px 13px;
+        border-left: 3px solid var(--accent);
+        color: var(--ink);
+        background: var(--surface);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .tip {
+        max-width: 64ch;
+        margin-top: 20px;
+        padding-left: 16px;
+        border-left: 2px solid var(--accent);
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.6;
+      }
+
+      .tip strong {
+        color: var(--ink);
+      }
+
+      .mistakes,
+      .faq {
+        padding: 76px 0;
+        border-top: 1px solid var(--line);
+        scroll-margin-top: 32px;
+      }
+
+      .section-intro {
+        max-width: 62ch;
+        margin-bottom: 38px;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.68;
+      }
+
+      .mistake-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 1px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--line);
+        overflow: hidden;
+      }
+
+      .mistake {
+        min-height: 190px;
+        padding: 26px;
+        background: var(--surface);
+      }
+
+      .mistake:first-child {
+        grid-row: span 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: var(--surface-strong);
+      }
+
+      .mistake-code {
+        width: fit-content;
+        display: block;
+        margin-bottom: 34px;
+        padding: 8px 10px;
+        border-radius: 7px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+        font-weight: 750;
+      }
+
+      .mistake h3 {
+        margin-bottom: 9px;
+        font-size: 1.02rem;
+      }
+
+      .mistake p {
+        max-width: 48ch;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.58;
+      }
+
+      .faq-list {
+        border-top: 1px solid var(--line);
+      }
+
+      details {
+        border-bottom: 1px solid var(--line);
+      }
+
+      summary {
+        min-height: 74px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 18px 0;
+        cursor: pointer;
+        font-weight: 750;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: "+";
+        flex: 0 0 auto;
+        color: var(--accent-strong);
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+
+      details[open] summary::after {
+        content: "−";
+      }
+
+      details p {
+        max-width: 66ch;
+        padding: 0 44px 22px 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.65;
+      }
+
+      .source-note {
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.55;
+      }
+
+      .source-link,
+      .text-link {
+        color: var(--accent-strong);
+        font-weight: 700;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .final-cta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 40px;
+        align-items: center;
+        margin-bottom: 96px;
+        padding: 44px;
+        border-radius: 20px;
+        color: #fff;
+        background: var(--ink);
+      }
+
+      .final-cta h2 {
+        max-width: 16ch;
+        margin-bottom: 12px;
+        font-size: clamp(2rem, 4vw, 3.3rem);
+        line-height: 1.05;
+      }
+
+      .final-cta p {
+        max-width: 56ch;
+        margin-bottom: 0;
+        color: #becbc5;
+        font-size: 0.92rem;
+        line-height: 1.6;
+      }
+
+      footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 32px;
+        padding: 28px 0 32px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 7px;
+      }
+
+      .footer-brand a {
+        width: fit-content;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.08rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .footer-brand span {
+        max-width: 42ch;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px 20px;
+      }
+
+      .footer-credit {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42em;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-decoration: none;
+      }
+
+      .tin-mark {
+        width: 0.9em;
+        height: 0.9em;
+        background: #66dc9d;
+      }
+
+      @media (max-width: 920px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 52px;
+          padding-top: 62px;
+        }
+
+        h1 {
+          max-width: 12ch;
+        }
+
+        .article-grid {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        .toc {
+          position: static;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 4px 20px;
+        }
+
+        .toc-title {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .shell {
+          width: min(100% - 32px, 1120px);
+        }
+
+        .site-header {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 12px 16px;
+          padding: 16px 0;
+        }
+
+        .site-nav {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-self: stretch;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .site-nav .nav-link:last-child {
+          display: none;
+        }
+
+        .hero {
+          padding: 48px 0 62px;
+        }
+
+        h1 {
+          font-size: clamp(3rem, 15vw, 4.5rem);
+        }
+
+        .block-board {
+          min-height: 390px;
+          padding: 10px;
+          border-radius: 18px;
+        }
+
+        .board-window {
+          min-height: 368px;
+        }
+
+        .block-canvas {
+          padding: 24px 14px;
+        }
+
+        .block {
+          font-size: 0.64rem;
+        }
+
+        .block-method {
+          margin-left: 8px;
+        }
+
+        .block-property {
+          margin-left: 16px;
+        }
+
+        .board-note {
+          right: 12px;
+          bottom: 12px;
+          width: 156px;
+          font-size: 0.69rem;
+        }
+
+        .toc {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quick-read {
+          grid-template-columns: 1fr;
+          margin-bottom: 58px;
+        }
+
+        .quick-read div {
+          min-height: auto;
+        }
+
+        .step {
+          grid-template-columns: 1fr;
+          gap: 18px;
+          padding: 48px 0;
+        }
+
+        .step-number {
+          width: 44px;
+          height: 44px;
+        }
+
+        .mistake-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .mistake:first-child {
+          grid-row: auto;
+        }
+
+        .final-cta {
+          grid-template-columns: 1fr;
+          margin-bottom: 64px;
+          padding: 30px 24px;
+        }
+
+        footer {
+          grid-template-columns: 1fr;
+          align-items: start;
+          gap: 16px;
+        }
+
+        .footer-links {
+          justify-content: flex-start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .header-cta,
+        .primary-cta {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body id="top">
+    <header class="site-header shell">
+      <a class="brand" href="/" aria-label="TinyDB Inspector home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>TinyDB Inspector</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="nav-link" href="/tinydb-ui/">TinyDB UI</a>
+        <a class="nav-link" href="#setup" aria-current="page">Tutorial</a>
+        <a class="nav-link" href="#faq">FAQ</a>
+      </nav>
+      <a class="header-cta" href="/tinydb-ui/">Open TinyDB UI</a>
+    </header>
+
+    <main>
+      <section class="hero shell" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">MIT App Inventor guide</p>
+          <h1 id="hero-title">TinyDB, one reliable tag at a time.</h1>
+          <p class="subhead">
+            Save a value, bring it back when the app reopens, and reuse it
+            across screens. This TinyDB App Inventor tutorial shows the exact
+            block pattern and the mistakes that quietly break it.
+          </p>
+          <a class="primary-cta" href="#setup">Build the first TinyDB flow</a>
+          <p class="primary-cta-note">
+            About 10 minutes. No extension or internet connection needed.
+          </p>
+        </div>
+
+        <figure class="block-board" aria-label="Block-style TinyDB save and load example">
+          <div class="board-window">
+            <div class="board-bar">
+              <span>Screen1 / Blocks</span>
+              <span class="board-status">TinyDB1 ready</span>
+            </div>
+            <div class="block-canvas" aria-hidden="true">
+              <div class="block-stack">
+                <div class="block block-event">when SaveButton.Click</div>
+                <div class="block block-method">
+                  call TinyDB1.StoreValue tag
+                  <span class="block-value">"profile_name"</span>
+                </div>
+                <div class="block block-property">valueToStore NameInput.Text</div>
+              </div>
+              <div class="block-stack">
+                <div class="block block-event">when Screen1.Initialize</div>
+                <div class="block block-method">set NameInput.Text to TinyDB1.GetValue</div>
+                <div class="block block-property">
+                  tag <span class="block-value">"profile_name"</span> default
+                  <span class="block-value">""</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption class="board-note">
+            <strong>The tag is the contract.</strong>
+            Use the exact same text when you store and retrieve a value.
+          </figcaption>
+        </figure>
+      </section>
+
+      <div class="article-grid shell">
+        <aside class="toc" aria-label="Tutorial contents">
+          <p class="toc-title">In this guide</p>
+          <a class="toc-link" href="#add-tinydb"><span>01</span>Add TinyDB</a>
+          <a class="toc-link" href="#store-value"><span>02</span>Store a value</a>
+          <a class="toc-link" href="#get-value"><span>03</span>Load it safely</a>
+          <a class="toc-link" href="#multiple-screens"><span>04</span>Use more screens</a>
+          <a class="toc-link" href="#mistakes"><span>05</span>Avoid mistakes</a>
+          <a class="toc-link" href="#faq"><span>06</span>Read the FAQ</a>
+        </aside>
+
+        <article class="article">
+          <div class="quick-read" role="group" aria-label="Tutorial summary">
+            <div>
+              <span>Component</span>
+              <strong>Storage → TinyDB</strong>
+            </div>
+            <div>
+              <span>Core blocks</span>
+              <strong>StoreValue + GetValue</strong>
+            </div>
+            <div>
+              <span>Best habit</span>
+              <strong>One name per tag</strong>
+            </div>
+          </div>
+
+          <p class="intro">
+            TinyDB is App Inventor's built-in store for data that should remain
+            after an app closes. Each item has a text tag and a value. The tag
+            works like a label: store under one label, then retrieve with that
+            exact label later. TinyDB is local to the app on the device, and it
+            can share data between screens in the same multi-screen app.
+          </p>
+
+          <ol id="setup" class="step-list">
+            <li id="add-tinydb" class="step">
+              <span class="step-number">01</span>
+              <div>
+                <h2>Add the TinyDB component</h2>
+                <p class="step-copy">
+                  In the Designer, open the <strong>Storage</strong> palette and
+                  drag <strong>TinyDB</strong> onto Screen1. It appears below the
+                  phone preview because it is a non-visible component. The
+                  default name, TinyDB1, is fine for this walkthrough.
+                </p>
+                <div class="recipe" role="group" aria-label="Designer setup recipe">
+                  <span class="recipe-title">Designer</span>
+                  <code class="recipe-line">Palette → Storage → TinyDB → Screen1</code>
+                </div>
+                <p class="tip">
+                  <strong>Keep the namespace consistent.</strong> If you change
+                  TinyDB's Namespace property, use the same value on every screen
+                  that needs the same data.
+                </p>
+              </div>
+            </li>
+
+            <li id="store-value" class="step">
+              <span class="step-number">02</span>
+              <div>
+                <h2>Store a value when it changes</h2>
+                <p class="step-copy">
+                  Open Blocks and choose the event that should save the data.
+                  A button click is easy to test. Add
+                  <strong>call TinyDB1.StoreValue</strong>, give it the tag
+                  <code>profile_name</code>, and connect the value you want to
+                  keep, such as NameInput.Text.
+                </p>
+                <div class="recipe" role="group" aria-label="StoreValue block recipe">
+                  <span class="recipe-title">Blocks recipe <span>save</span></span>
+                  <code class="recipe-line">when SaveButton.Click</code>
+                  <code class="recipe-line">call TinyDB1.StoreValue</code>
+                  <code class="recipe-line">tag = "profile_name"</code>
+                  <code class="recipe-line">valueToStore = NameInput.Text</code>
+                </div>
+                <p class="tip">
+                  <strong>The whole tag text needs to match.</strong> Treat
+                  <code>profile_name</code>, <code>Profile_Name</code>, and
+                  <code>profileName</code> as different labels. Pick one naming
+                  style and stick to it.
+                </p>
+              </div>
+            </li>
+
+            <li id="get-value" class="step">
+              <span class="step-number">03</span>
+              <div>
+                <h2>Load the value with a safe fallback</h2>
+                <p class="step-copy">
+                  Retrieve the saved value when the screen starts. In
+                  <strong>Screen1.Initialize</strong>, set NameInput.Text to
+                  <strong>TinyDB1.GetValue</strong>. Enter the same tag and use
+                  an empty text block for <strong>valueIfTagNotThere</strong>.
+                  That fallback is returned the first time the app runs.
+                </p>
+                <div class="recipe" role="group" aria-label="GetValue block recipe">
+                  <span class="recipe-title">Blocks recipe <span>load</span></span>
+                  <code class="recipe-line">when Screen1.Initialize</code>
+                  <code class="recipe-line">set NameInput.Text to TinyDB1.GetValue</code>
+                  <code class="recipe-line">tag = "profile_name"</code>
+                  <code class="recipe-line">valueIfTagNotThere = ""</code>
+                </div>
+                <p class="tip">
+                  <strong>Match the fallback to the expected type.</strong> Use
+                  empty text for text, 0 for a number, false for a boolean, or an
+                  empty list when the rest of your blocks expect a list.
+                </p>
+              </div>
+            </li>
+
+            <li id="multiple-screens" class="step">
+              <span class="step-number">04</span>
+              <div>
+                <h2>Read the same tag on another screen</h2>
+                <p class="step-copy">
+                  Add a TinyDB component to the second screen, keep its Namespace
+                  aligned with the first, and call GetValue with
+                  <code>profile_name</code>. App Inventor allows screens in the
+                  same app to share TinyDB data. You do not need to send the
+                  stored value through "open another screen with start value."
+                </p>
+                <div class="recipe" role="group" aria-label="Multi-screen TinyDB recipe">
+                  <span class="recipe-title">Profile screen</span>
+                  <code class="recipe-line">when ProfileScreen.Initialize</code>
+                  <code class="recipe-line">set WelcomeLabel.Text to TinyDB1.GetValue</code>
+                  <code class="recipe-line">tag = "profile_name" · default = "Guest"</code>
+                </div>
+                <p class="tip">
+                  <strong>Test the packaged app too.</strong> During development,
+                  every project running inside the AI Companion shares the
+                  Companion's TinyDB. Installed apps do not share that test data.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <section id="mistakes" class="mistakes" aria-labelledby="mistakes-title">
+            <h2 id="mistakes-title" class="section-title">Three mistakes worth checking first</h2>
+            <p class="section-intro">
+              TinyDB usually fails quietly. The app keeps running, but the wrong
+              tag or wrong fallback makes it look as if the data disappeared.
+            </p>
+            <div class="mistake-grid">
+              <article class="mistake">
+                <span class="mistake-code">saved_trips ≠ savedTrips</span>
+                <div>
+                  <h3>Tag names drift between blocks</h3>
+                  <p>
+                    Copy the exact tag text into every StoreValue, GetValue, and
+                    ClearTag block. A naming convention such as lowercase words
+                    joined by underscores is easier to scan across screens.
+                  </p>
+                </div>
+              </article>
+              <article class="mistake">
+                <span class="mistake-code">default = ""</span>
+                <h3>The fallback has the wrong type</h3>
+                <p>
+                  Returning empty text where later blocks expect a list or number
+                  can break comparisons and list operations.
+                </p>
+              </article>
+              <article class="mistake">
+                <span class="mistake-code">call TinyDB1.ClearAll</span>
+                <h3>A reset clears more than intended</h3>
+                <p>
+                  Use ClearTag for one setting. ClearAll removes every stored
+                  entry in that TinyDB data store.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section id="faq" class="faq" aria-labelledby="faq-title">
+            <h2 id="faq-title" class="section-title">TinyDB App Inventor FAQ</h2>
+            <div class="faq-list">
+              <details>
+                <summary>Does TinyDB sync data across different phones?</summary>
+                <p>
+                  No. TinyDB stores persistent data locally for one app on one
+                  device. Use a networked storage component such as CloudDB when
+                  different devices need shared data.
+                </p>
+              </details>
+              <details>
+                <summary>Why do I see old values in the AI Companion?</summary>
+                <p>
+                  Apps tested in the AI Companion share its TinyDB during
+                  development. Clear the Companion app's data before switching
+                  projects when old values interfere with testing.
+                </p>
+              </details>
+              <details>
+                <summary>What does valueIfTagNotThere do?</summary>
+                <p>
+                  GetValue returns valueIfTagNotThere when the requested tag has
+                  not been stored. Choose a fallback with the same type your
+                  screen expects.
+                </p>
+              </details>
+              <details>
+                <summary>Should I use ClearTag or ClearAll?</summary>
+                <p>
+                  Use ClearTag to remove one named value. ClearAll removes every
+                  entry in that TinyDB data store, so reserve it for a deliberate
+                  full reset.
+                </p>
+              </details>
+            </div>
+            <p class="source-note">
+              Component behavior in this guide is checked against the
+              <a
+                class="source-link"
+                href="https://ai2.appinventor.mit.edu/reference/components/storage.html#TinyDB"
+                rel="noreferrer"
+              >official MIT App Inventor TinyDB reference</a>.
+            </p>
+          </section>
+        </article>
+      </div>
+
+      <section class="final-cta shell" aria-labelledby="audit-title">
+        <div>
+          <h2 id="audit-title">Already debugging a bigger project?</h2>
+          <p>
+            Explore the planned TinyDB UI for mapping tags across App Inventor
+            screens and spotting likely mismatches before you edit every block.
+          </p>
+        </div>
+        <a class="primary-cta" href="/tinydb-ui/">Explore the TinyDB UI</a>
+      </section>
+    </main>
+
+    <footer class="shell">
+      <div class="footer-brand">
+        <a href="/">TinyDB Inspector</a>
+        <span>A privacy-first TinyDB toolkit for App Inventor and Kodular makers.</span>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a class="footer-link" href="/">Home</a>
+        <a class="footer-link" href="/tinydb-ui/">TinyDB UI</a>
+        <a
+          class="footer-link"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20tutorial%20question"
+        >Support</a>
+        <a class="footer-credit" href="https://tin.computer">
+          <span class="tin-mark" aria-hidden="true"></span>
+          Growth by Tin
+        </a>
+      </nav>
+    </footer>
+  </body>
+</html>
