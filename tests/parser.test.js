@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { analyzeAia, buildAudit, extractTinyDbUsage } from "../analyzer/parser.js";
+import { createAuditCompletionTracker } from "../analyzer/telemetry.js";
 
 const screenOne = `
   <xml xmlns="https://developers.google.com/blockly/xml">
@@ -67,4 +68,17 @@ test("opens the representative .aia sample and finds the known mismatch", async 
   assert.deepEqual(audit.screens.map(({ name }) => name), ["Screen1", "Screen2"]);
   assert.deepEqual(audit.usages.map(({ tag }) => tag), ["profile_name", "profile-name"]);
   assert.equal(audit.issues.length, 1);
+});
+
+test("records one completion event for each successful audit run", () => {
+  const events = [];
+  const trackCompletion = createAuditCompletionTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(trackCompletion(1, { source: "sample" }), true);
+  assert.equal(trackCompletion(1, { source: "sample" }), false);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].event, "tinydb_audit_completed");
+  assert.deepEqual(events[0].properties, { source: "sample" });
 });

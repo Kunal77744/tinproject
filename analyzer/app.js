@@ -1,4 +1,5 @@
 import { analyzeAia } from "./parser.js";
+import { createAuditCompletionTracker } from "./telemetry.js";
 
 const sampleButton = document.querySelector("#sample-button");
 const fileInput = document.querySelector("#project-file");
@@ -7,6 +8,10 @@ const results = document.querySelector("#results");
 const overview = document.querySelector("#overview");
 const screenList = document.querySelector("#screen-list");
 const checklist = document.querySelector("#checklist");
+let auditRun = 0;
+const captureAuditCompleted = createAuditCompletionTracker((event, properties) => {
+  window.posthog?.capture?.(event, properties);
+});
 
 function escapeHtml(value) {
   return String(value)
@@ -67,32 +72,47 @@ function renderAudit(audit, projectName) {
   results.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-async function runAudit(buffer, projectName) {
+async function runAudit(buffer, projectName, source) {
+  const runId = ++auditRun;
   status.textContent = `Inspecting ${projectName} locally…`;
   results.hidden = true;
 
   try {
-    renderAudit(await analyzeAia(buffer), projectName);
+    const audit = await analyzeAia(buffer);
+    renderAudit(audit, projectName);
+    captureAuditCompleted(runId, {
+      route: window.location.pathname,
+      source,
+      screens_mapped: audit.screens.length,
+      tag_spellings: new Set(audit.usages.map(({ tag }) => tag)).size,
+      likely_mismatches: audit.issues.length,
+    });
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : "This project could not be inspected.";
   }
 }
 
-sampleButton.addEventListener("click", async () => {
+async function runSampleAudit() {
   sampleButton.disabled = true;
   try {
     const response = await fetch("./samples/tinydb-cross-screen-mismatch.aia");
     if (!response.ok) throw new Error("The sample project could not be loaded.");
-    await runAudit(await response.arrayBuffer(), "TinyDB mismatch sample");
+    await runAudit(await response.arrayBuffer(), "TinyDB mismatch sample", "sample");
   } catch (error) {
     status.textContent = error instanceof Error ? error.message : "The sample project could not be loaded.";
   } finally {
     sampleButton.disabled = false;
   }
-});
+}
+
+sampleButton.addEventListener("click", runSampleAudit);
 
 fileInput.addEventListener("change", async () => {
   const [file] = fileInput.files;
   if (!file) return;
-  await runAudit(await file.arrayBuffer(), file.name);
+  await runAudit(await file.arrayBuffer(), file.name, "local_file");
 });
+
+if (new URLSearchParams(window.location.search).get("sample") === "1") {
+  runSampleAudit();
+}

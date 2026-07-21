@@ -64,16 +64,18 @@
   posthog.__SV = 1;
 })(document, window.posthog || []);
 
-posthog.init("phc_oMaktxRgHwFS89pc7JvsVVtPTv4R6foqNYMhkK5MaEVt", {
-  api_host: "https://us.i.posthog.com",
-  defaults: "2026-05-30",
-  autocapture: false,
-  capture_pageview: false,
-  capture_pageleave: true,
-  disable_session_recording: true,
-  person_profiles: "identified_only",
-});
+if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+  posthog.init("phc_oMaktxRgHwFS89pc7JvsVVtPTv4R6foqNYMhkK5MaEVt", {
+    api_host: "https://us.i.posthog.com",
+    defaults: "2026-05-30",
+    autocapture: false,
+    capture_pageview: false,
+    capture_pageleave: true,
+    disable_session_recording: true,
+    person_profiles: "identified_only",
+  });
 
-posthog.capture("landing_page_viewed", {
-  route: window.location.pathname,
-});
+  posthog.capture("landing_page_viewed", {
+    route: window.location.pathname,
+  });
+}
