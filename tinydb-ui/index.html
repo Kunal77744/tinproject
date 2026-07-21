@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta
       name="description"
-      content="TinyDB UI for App Inventor and Kodular: map tags across screens, catch risky data mistakes, and turn hidden TinyDB behavior into a repair checklist."
+      content="TinyDB UI for App Inventor: map literal StoreValue and GetValue tags across screens, catch likely naming mismatches, and follow a focused repair checklist."
     >
     <link rel="canonical" href="https://tinproject-ydbq.vercel.app/tinydb-ui/">
     <meta property="og:type" content="website">
     <meta property="og:title" content="TinyDB UI for App Inventor | TinyDB Inspector">
     <meta
       property="og:description"
-      content="See every TinyDB tag, where it is used, and what needs fixing before hidden data bugs reach your users."
+      content="See literal TinyDB tags across screens, catch likely naming mismatches, and get a focused repair checklist without uploading your project."
     >
     <meta property="og:url" content="https://tinproject-ydbq.vercel.app/tinydb-ui/">
     <title>TinyDB UI for App Inventor | TinyDB Inspector</title>
@@ -28,15 +28,15 @@
         "url": "https://tinproject-ydbq.vercel.app/tinydb-ui/",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
-        "description": "A privacy-first TinyDB UI for App Inventor and Kodular projects that maps tags across screens, highlights likely data mistakes, and produces a repair checklist.",
+        "description": "A browser-only TinyDB UI for App Inventor projects that maps literal StoreValue and GetValue tags across screens, highlights likely naming mismatches, and produces repair steps.",
         "featureList": [
-          "Map TinyDB tags across app screens",
-          "Flag inconsistent names, types, and defaults",
-          "Identify destructive clear operations",
-          "Export a focused repair checklist"
+          "Map literal TinyDB StoreValue and GetValue tags across app screens",
+          "Flag likely punctuation and case naming mismatches",
+          "Produce focused repair steps"
         ]
       }
     </script>
+    <script defer src="/analytics.js"></script>
     <style>
       :root {
         color-scheme: light;
@@ -811,12 +811,7 @@
         <a class="nav-link" href="#what-it-finds">What it finds</a>
         <a class="nav-link" href="#how-it-works">How it works</a>
       </nav>
-      <a
-        class="header-cta"
-        href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
-      >
-        Join early access
-      </a>
+      <a class="header-cta" href="/analyzer/">Run private audit</a>
     </header>
 
     <main>
@@ -825,18 +820,18 @@
           <p class="eyebrow">TinyDB UI for App Inventor</p>
           <h1 id="hero-title">A TinyDB UI for the data your blocks hide.</h1>
           <p class="subhead">
-            Map every TinyDB tag across your App Inventor or Kodular project,
-            catch mismatched names and risky clears, then leave with a focused
+            Map literal StoreValue and GetValue tags across your App Inventor
+            project, catch likely naming mismatches, then follow a focused
             repair checklist. Your project stays in your browser.
           </p>
           <div class="cta-row">
             <a
               class="primary-cta"
-              href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
+              href="/analyzer/"
             >
-              Join early access
+              Run private audit
             </a>
-            <span class="cta-note">Help shape the first working release.</span>
+            <span class="cta-note">No upload or account required.</span>
           </div>
         </div>
 
@@ -892,7 +887,7 @@
           <h2 id="finds-title">One view of every hidden connection.</h2>
           <p>
             TinyDB works quietly behind your blocks. That makes it useful, but
-            also makes small naming and type mistakes hard to trace. The TinyDB
+            also makes small naming mistakes hard to trace. The TinyDB
             UI turns those scattered reads and writes into one understandable map.
           </p>
         </div>
@@ -900,17 +895,17 @@
           <article class="feature">
             <span class="feature-number">01 / MAP</span>
             <h3>Follow tags across screens</h3>
-            <p>See where each value is stored, retrieved, cleared, and reused across your project.</p>
+            <p>See where each literal tag is stored and retrieved across your project screens.</p>
           </article>
           <article class="feature">
             <span class="feature-number">02 / CHECK</span>
             <h3>Spot likely mistakes</h3>
-            <p>Surface inconsistent names, unexpected types, missing defaults, and destructive clears.</p>
+            <p>Surface likely punctuation and case differences that can split one stored value into two tag names.</p>
           </article>
           <article class="feature">
             <span class="feature-number">03 / REPAIR</span>
             <h3>Fix the right blocks first</h3>
-            <p>Turn the findings into a practical checklist you can follow inside App Inventor or Kodular.</p>
+            <p>Turn each likely naming mismatch into a practical rename and retest step inside App Inventor.</p>
           </article>
         </div>
       </section>
@@ -919,8 +914,8 @@
         <div class="section-heading">
           <h2 id="process-title">A clearer path from file to fix.</h2>
           <p>
-            The first release is being built around a simple, private workflow.
-            No migration, browser extension, or cloud project setup is planned.
+            The first release uses a simple, private workflow. No migration,
+            browser extension, or cloud project setup is required.
           </p>
         </div>
         <div class="steps">
@@ -928,14 +923,14 @@
             <span>STEP 01</span>
             <div>
               <h3>Choose your .aia project</h3>
-              <p>Open the exported App Inventor or Kodular project you already use.</p>
+              <p>Open the exported App Inventor project you already use.</p>
             </div>
           </article>
           <article class="step">
             <span>STEP 02</span>
             <div>
               <h3>Analyze it in your browser</h3>
-              <p>The planned workflow reads project structure locally so your source file does not need to be uploaded.</p>
+              <p>The analyzer reads the project structure locally, so your source file is not uploaded.</p>
             </div>
           </article>
           <article class="step">
@@ -952,15 +947,15 @@
         <div>
           <h2 id="access-title">Make TinyDB easier to trust.</h2>
           <p>
-            Join early access to see the first working build and tell us which
-            TinyDB problems cost you the most debugging time.
+            Run the working literal-tag audit now and leave with a focused
+            repair step for each likely cross-screen naming mismatch.
           </p>
         </div>
         <a
           class="primary-cta"
-          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20UI%20early%20access"
+          href="/analyzer/"
         >
-          Join early access
+          Run private audit
         </a>
       </section>
     </main>
@@ -968,7 +963,7 @@
     <footer class="shell">
       <div class="footer-brand">
         <a href="/">TinyDB Inspector</a>
-        <span>A privacy-first TinyDB toolkit for App Inventor and Kodular makers.</span>
+        <span>A privacy-first TinyDB toolkit for App Inventor makers.</span>
       </div>
       <div class="footer-links" aria-label="Footer navigation">
         <a

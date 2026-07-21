@@ -1,0 +1,84 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+import { analyzeAia, buildAudit, extractTinyDbUsage } from "../analyzer/parser.js";
+import { createAuditCompletionTracker } from "../analyzer/telemetry.js";
+
+const screenOne = `
+  <xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="component_method" id="store-profile">
+      <mutation component_type="TinyDB" method_name="StoreValue" />
+      <value name="ARG0"><block type="text"><field name="TEXT">profile_name</field></block></value>
+      <value name="ARG1"><block type="text"><field name="TEXT">Ada</field></block></value>
+    </block>
+  </xml>`;
+
+const screenTwo = `
+  <xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="component_method" id="get-profile">
+      <mutation component_type="TinyDB" method_name="GetValue" />
+      <value name="ARG0"><block type="text"><field name="TEXT">profile-name</field></block></value>
+      <value name="ARG1"><block type="text"><field name="TEXT">Unknown</field></block></value>
+    </block>
+  </xml>`;
+
+test("extracts literal TinyDB operations from App Inventor blocks", () => {
+  assert.deepEqual(extractTinyDbUsage(screenOne, "Screen1"), [
+    {
+      screen: "Screen1",
+      tag: "profile_name",
+      operation: "store",
+      defaultValue: null,
+      blockId: "store-profile",
+    },
+  ]);
+
+  assert.deepEqual(extractTinyDbUsage(screenTwo, "Screen2"), [
+    {
+      screen: "Screen2",
+      tag: "profile-name",
+      operation: "get",
+      defaultValue: "Unknown",
+      blockId: "get-profile",
+    },
+  ]);
+});
+
+test("flags a punctuation-only tag mismatch across screens", () => {
+  const usages = [
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(screenTwo, "Screen2"),
+  ];
+  const audit = buildAudit(usages);
+
+  assert.equal(audit.screens.length, 2);
+  assert.equal(audit.issues.length, 1);
+  assert.equal(audit.issues[0].type, "tag_mismatch");
+  assert.match(audit.issues[0].title, /profile-name/);
+  assert.match(audit.issues[0].detail, /profile_name/);
+});
+
+test("opens the representative .aia sample and finds the known mismatch", async () => {
+  const sample = await readFile(
+    new URL("../analyzer/samples/tinydb-cross-screen-mismatch.aia", import.meta.url),
+  );
+  const audit = await analyzeAia(sample);
+
+  assert.deepEqual(audit.screens.map(({ name }) => name), ["Screen1", "Screen2"]);
+  assert.deepEqual(audit.usages.map(({ tag }) => tag), ["profile_name", "profile-name"]);
+  assert.equal(audit.issues.length, 1);
+});
+
+test("records one completion event for each successful audit run", () => {
+  const events = [];
+  const trackCompletion = createAuditCompletionTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(trackCompletion(1, { source: "sample" }), true);
+  assert.equal(trackCompletion(1, { source: "sample" }), false);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].event, "tinydb_audit_completed");
+  assert.deepEqual(events[0].properties, { source: "sample" });
+});
