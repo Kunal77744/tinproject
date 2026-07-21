@@ -1,4 +1,5 @@
 import { analyzeAia } from "./parser.js";
+import { guidanceForAuditError } from "./error-guidance.js";
 import { createAuditCompletionTracker } from "./telemetry.js";
 
 const sampleButton = document.querySelector("#sample-button");
@@ -88,7 +89,7 @@ async function runAudit(buffer, projectName, source) {
       likely_mismatches: audit.issues.length,
     });
   } catch (error) {
-    status.textContent = error instanceof Error ? error.message : "This project could not be inspected.";
+    status.textContent = guidanceForAuditError(error);
   }
 }
 
