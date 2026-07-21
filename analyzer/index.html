@@ -57,6 +57,8 @@
       .primary-action:active { transform: translateY(0); }
       .file-label { min-height: 48px; display: inline-flex; align-items: center; color: var(--muted); font-size: 0.88rem; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
       .file-label input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .file-choice { display: grid; gap: 5px; }
+      .file-note { max-width: 48ch; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
       .status { min-height: 24px; margin: 20px 0 0; color: var(--muted); font-size: 0.84rem; }
       .primary-action:focus-visible, .file-label:focus-within, .brand:focus-visible { outline: 3px solid rgb(22 114 74 / 32%); outline-offset: 4px; }
 
@@ -147,7 +149,10 @@
           <p class="lede">Map literal TinyDB tags across App Inventor screens and get a repair checklist. Your project is read locally and never uploaded.</p>
           <div class="action-group">
             <button class="primary-action" id="sample-button" type="button">Inspect sample project</button>
-            <label class="file-label">Choose your own .aia<input id="project-file" type="file" accept=".aia,application/zip"></label>
+            <div class="file-choice">
+              <label class="file-label">Choose your own .aia<input id="project-file" type="file" accept=".aia,application/zip"></label>
+              <span class="file-note">Choose an exported .aia from App Inventor. It is processed in this browser and never uploaded.</span>
+            </div>
           </div>
           <p class="status" id="status" role="status" aria-live="polite">Start with the prepared two-screen project.</p>
         </div>

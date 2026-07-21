@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { analyzeAia, buildAudit, extractTinyDbUsage } from "../analyzer/parser.js";
+import { guidanceForAuditError } from "../analyzer/error-guidance.js";
 import { createAuditCompletionTracker } from "../analyzer/telemetry.js";
 
 const screenOne = `
@@ -81,4 +82,32 @@ test("records one completion event for each successful audit run", () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].event, "tinydb_audit_completed");
   assert.deepEqual(events[0].properties, { source: "sample" });
+});
+
+test("gives invalid archives an export-and-retry step", async () => {
+  await assert.rejects(
+    analyzeAia(new TextEncoder().encode("not a zip archive")),
+    (error) => {
+      assert.equal(error.code, "invalid_archive");
+      assert.match(guidanceForAuditError(error), /Export the project again/);
+      assert.match(guidanceForAuditError(error), /choose the new \.aia file/);
+      return true;
+    },
+  );
+});
+
+test("explains what to try when archive compression is unsupported", () => {
+  const message = guidanceForAuditError({ code: "unsupported_compression" });
+
+  assert.match(message, /compression/);
+  assert.match(message, /Re-export/);
+  assert.match(message, /Chrome or Edge/);
+});
+
+test("does not imply a project is bug-free when no literal tags are found", () => {
+  const message = guidanceForAuditError({ code: "no_literal_tags" });
+
+  assert.match(message, /no literal TinyDB StoreValue or GetValue tags/);
+  assert.match(message, /variables or text joins/);
+  assert.match(message, /doesn't analyze dynamic tags yet/);
 });

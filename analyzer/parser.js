@@ -1,5 +1,17 @@
 const textDecoder = new TextDecoder();
 
+export class AiaAnalysisError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "AiaAnalysisError";
+    this.code = code;
+  }
+}
+
+function analysisError(code, message) {
+  return new AiaAnalysisError(code, message);
+}
+
 function readString(bytes, start, length) {
   return textDecoder.decode(bytes.subarray(start, start + length));
 }
@@ -13,12 +25,12 @@ function findEndOfCentralDirectory(view) {
     }
   }
 
-  throw new Error("This file is not a readable .aia project archive.");
+  throw analysisError("invalid_archive", "This file is not a readable .aia project archive.");
 }
 
 async function inflateRaw(bytes) {
   if (typeof DecompressionStream === "undefined") {
-    throw new Error("This browser cannot open compressed .aia files yet.");
+    throw analysisError("unsupported_compression", "This browser cannot open compressed .aia files yet.");
   }
 
   const stream = new Blob([bytes])
@@ -37,7 +49,7 @@ export async function readZipEntries(input) {
 
   for (let index = 0; index < entryCount; index += 1) {
     if (view.getUint32(centralOffset, true) !== 0x02014b50) {
-      throw new Error("The .aia archive directory is damaged.");
+      throw analysisError("invalid_archive", "The .aia archive directory is damaged.");
     }
 
     const compression = view.getUint16(centralOffset + 10, true);
@@ -50,7 +62,7 @@ export async function readZipEntries(input) {
 
     if (!name.endsWith("/")) {
       if (view.getUint32(localOffset, true) !== 0x04034b50) {
-        throw new Error(`The archive entry ${name} is damaged.`);
+        throw analysisError("invalid_archive", `The archive entry ${name} is damaged.`);
       }
 
       const localNameLength = view.getUint16(localOffset + 26, true);
@@ -64,7 +76,7 @@ export async function readZipEntries(input) {
       } else if (compression === 8) {
         content = await inflateRaw(compressed);
       } else {
-        throw new Error(`The archive uses unsupported compression for ${name}.`);
+        throw analysisError("unsupported_compression", `The archive uses unsupported compression for ${name}.`);
       }
 
       entries.set(name, content);
@@ -213,7 +225,7 @@ export async function analyzeAia(input) {
   const blockFiles = [...entries.entries()].filter(([path]) => path.endsWith(".bky"));
 
   if (blockFiles.length === 0) {
-    throw new Error("No App Inventor block files were found in this project.");
+    throw analysisError("invalid_project", "No App Inventor block files were found in this project.");
   }
 
   const usages = blockFiles.flatMap(([path, content]) =>
@@ -221,7 +233,7 @@ export async function analyzeAia(input) {
   );
 
   if (usages.length === 0) {
-    throw new Error("No literal TinyDB StoreValue or GetValue tags were found.");
+    throw analysisError("no_literal_tags", "No literal TinyDB StoreValue or GetValue tags were found.");
   }
 
   return buildAudit(usages);
