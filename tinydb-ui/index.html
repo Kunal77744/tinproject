@@ -276,6 +276,35 @@
         overflow: hidden;
       }
 
+      .preview-header {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 2px 12px;
+      }
+
+      .preview-label {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        margin: 0;
+        padding: 0 10px;
+        border-radius: 999px;
+        color: var(--accent-strong);
+        background: var(--accent-soft);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .preview-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.68rem;
+      }
+
       .inspector::before {
         content: "";
         position: absolute;
@@ -717,6 +746,14 @@
           border-radius: 18px;
         }
 
+        .preview-header {
+          padding: 0 0 10px;
+        }
+
+        .preview-note {
+          display: none;
+        }
+
         .app-body {
           grid-template-columns: 82px minmax(0, 1fr);
         }
@@ -835,7 +872,11 @@
           </div>
         </div>
 
-        <aside class="inspector" aria-label="Preview of the TinyDB Inspector interface">
+        <aside class="inspector" aria-label="Product preview of the TinyDB Inspector interface">
+          <div class="preview-header">
+            <p class="preview-label">Product preview</p>
+            <p class="preview-note">Working literal-tag audit outputs</p>
+          </div>
           <div class="app-window">
             <div class="app-bar">
               <span>project / travel-buddy.aia</span>
@@ -851,23 +892,23 @@
               <div class="tag-panel">
                 <div class="panel-heading">
                   <strong>TinyDB tags</strong>
-                  <span>4 found · 1 issue</span>
+                  <span>4 literal tags · 1 likely mismatch</span>
                 </div>
                 <div class="tag-row">
-                  <span class="tag-name"><span class="tag-icon">Aa</span>traveler_name</span>
-                  <span class="tag-type">text · 3 uses</span>
+                  <span class="tag-name"><span class="tag-icon">S</span>traveler_name</span>
+                  <span class="tag-type">Store value · Screen1</span>
                 </div>
                 <div class="tag-row">
-                  <span class="tag-name"><span class="tag-icon">[ ]</span>saved_trips</span>
-                  <span class="tag-type">list · 5 uses</span>
+                  <span class="tag-name"><span class="tag-icon">G</span>saved_trips</span>
+                  <span class="tag-type">Get value · Profile + Settings</span>
                 </div>
                 <div class="tag-row">
                   <span class="tag-name"><span class="tag-icon warn">!</span>savedTrips</span>
-                  <span class="tag-type">possible mismatch</span>
+                  <span class="tag-type">Likely naming mismatch</span>
                 </div>
                 <div class="tag-row">
-                  <span class="tag-name"><span class="tag-icon">01</span>dark_mode</span>
-                  <span class="tag-type">boolean · 2 uses</span>
+                  <span class="tag-name"><span class="tag-icon">S/G</span>dark_mode</span>
+                  <span class="tag-type">Store + get · 2 screens</span>
                 </div>
               </div>
             </div>
@@ -876,7 +917,7 @@
             <span class="issue-count">1</span>
             <span>
               <strong>Tag name may not match</strong>
-              “savedTrips” appears once while “saved_trips” is used on two screens.
+              Rename “savedTrips” to “saved_trips”, then retest the affected screens.
             </span>
           </div>
         </aside>
