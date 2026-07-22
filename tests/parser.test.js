@@ -7,7 +7,13 @@ import { guidanceForAuditError } from "../analyzer/error-guidance.js";
 import {
   createAuditCompletionTracker,
   createAuditStartTracker,
+  createPaidReportInterestTracker,
 } from "../analyzer/telemetry.js";
+import {
+  createFullReportMailto,
+  createRepairSummary,
+  SUPPORT_ADDRESS,
+} from "../analyzer/result-actions.js";
 
 const screenOne = `
   <xml xmlns="https://developers.google.com/blockly/xml">
@@ -146,6 +152,58 @@ test("records one privacy-safe start event for each audit run", () => {
     },
     {
       event: "tinydb_audit_started",
+      properties: { route: "/analyzer/", source: "local_file" },
+    },
+  ]);
+});
+
+test("builds a copyable summary from only the visible repair result", () => {
+  const audit = buildAudit([
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(screenTwo, "Screen2"),
+  ]);
+  const summary = createRepairSummary(audit);
+
+  assert.match(summary, /^TinyDB repair summary/);
+  assert.match(summary, /profile_name/);
+  assert.match(summary, /Rerun the browser-only audit/);
+});
+
+test("opens a privacy-safe fuller-report email draft in the managed inbox", () => {
+  const url = new URL(createFullReportMailto());
+
+  assert.equal(url.protocol, "mailto:");
+  assert.equal(url.pathname, SUPPORT_ADDRESS);
+  assert.equal(url.searchParams.get("subject"), "TinyDB fuller repair report");
+  assert.match(url.searchParams.get("body"), /I'd like to ask about a fuller TinyDB repair report/);
+  assert.doesNotMatch(url.searchParams.get("body"), /profile_name|\.aia|Screen1/);
+});
+
+test("records paid-report interest once per completed result without project data", () => {
+  const events = [];
+  const trackInterest = createPaidReportInterestTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackInterest(1, {
+      route: "/analyzer/",
+      source: "sample",
+      project_name: "must not be captured",
+      tags: ["must-not-leave-the-browser"],
+    }),
+    true,
+  );
+  assert.equal(trackInterest(1, { route: "/analyzer/", source: "sample" }), false);
+  assert.equal(trackInterest(2, { route: "/analyzer/", source: "local_file" }), true);
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_paid_report_interest_clicked",
+      properties: { route: "/analyzer/", source: "sample" },
+    },
+    {
+      event: "tinydb_paid_report_interest_clicked",
       properties: { route: "/analyzer/", source: "local_file" },
     },
   ]);
