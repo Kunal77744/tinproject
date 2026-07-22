@@ -30,3 +30,21 @@ export function createAuditCompletionTracker(capture) {
     return true;
   };
 }
+
+export function createPaidReportInterestTracker(capture) {
+  const interestedRuns = new Set();
+
+  return (runId, properties) => {
+    if (interestedRuns.has(runId)) return false;
+    interestedRuns.add(runId);
+
+    if (typeof capture === "function") {
+      capture("tinydb_paid_report_interest_clicked", {
+        route: properties.route,
+        source: properties.source,
+      });
+    }
+
+    return true;
+  };
+}

@@ -1,6 +1,11 @@
 import { analyzeAia } from "./parser.js";
 import { guidanceForAuditError } from "./error-guidance.js";
-import { createAuditCompletionTracker, createAuditStartTracker } from "./telemetry.js";
+import { createFullReportMailto, createRepairSummary } from "./result-actions.js";
+import {
+  createAuditCompletionTracker,
+  createAuditStartTracker,
+  createPaidReportInterestTracker,
+} from "./telemetry.js";
 
 const sampleButton = document.querySelector("#sample-button");
 const fileInput = document.querySelector("#project-file");
@@ -9,12 +14,19 @@ const results = document.querySelector("#results");
 const overview = document.querySelector("#overview");
 const screenList = document.querySelector("#screen-list");
 const checklist = document.querySelector("#checklist");
+const copySummaryButton = document.querySelector("#copy-summary");
+const copyStatus = document.querySelector("#copy-status");
+const fullReportLink = document.querySelector("#full-report-link");
 let auditRun = 0;
+let activeResult = null;
 const captureAuditEvent = (event, properties) => {
   window.posthog?.capture?.(event, properties);
 };
 const captureAuditStarted = createAuditStartTracker(captureAuditEvent);
 const captureAuditCompleted = createAuditCompletionTracker(captureAuditEvent);
+const capturePaidReportInterest = createPaidReportInterestTracker(captureAuditEvent);
+
+fullReportLink.href = createFullReportMailto();
 
 function escapeHtml(value) {
   return String(value)
@@ -24,7 +36,7 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-function renderAudit(audit, projectName) {
+function renderAudit(audit, projectName, runId, source) {
   const tagCount = new Set(audit.usages.map(({ tag }) => tag)).size;
   overview.innerHTML = `
     <div><strong>${audit.screens.length}</strong><span>Screens mapped</span></div>
@@ -71,6 +83,12 @@ function renderAudit(audit, projectName) {
     : '<li class="clear-result"><span aria-hidden="true">✓</span><div><h3>No likely cross-screen mismatch found</h3><p>Review dynamic tag values manually before shipping.</p></div></li>';
 
   status.textContent = `Audit complete for ${projectName}. Nothing left your browser.`;
+  activeResult = {
+    runId,
+    source,
+    repairSummary: createRepairSummary(audit),
+  };
+  copyStatus.textContent = "";
   results.hidden = false;
   results.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -83,10 +101,11 @@ async function runAudit(buffer, projectName, source) {
   });
   status.textContent = `Inspecting ${projectName} locally…`;
   results.hidden = true;
+  activeResult = null;
 
   try {
     const audit = await analyzeAia(buffer);
-    renderAudit(audit, projectName);
+    renderAudit(audit, projectName, runId, source);
     captureAuditCompleted(runId, {
       route: window.location.pathname,
       source,
@@ -98,6 +117,26 @@ async function runAudit(buffer, projectName, source) {
     status.textContent = guidanceForAuditError(error);
   }
 }
+
+copySummaryButton.addEventListener("click", async () => {
+  if (!activeResult) return;
+
+  try {
+    await navigator.clipboard.writeText(activeResult.repairSummary);
+    copyStatus.textContent = "Repair summary copied.";
+  } catch {
+    copyStatus.textContent = "Copy failed. Select the repair steps above and copy them manually.";
+  }
+});
+
+fullReportLink.addEventListener("click", () => {
+  if (!activeResult) return;
+
+  capturePaidReportInterest(activeResult.runId, {
+    route: window.location.pathname,
+    source: activeResult.source,
+  });
+});
 
 async function runSampleAudit() {
   sampleButton.disabled = true;
