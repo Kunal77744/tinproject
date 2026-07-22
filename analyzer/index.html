@@ -79,6 +79,9 @@
       .section-heading { display: grid; grid-template-columns: 1fr minmax(320px, 0.85fr); gap: 48px; align-items: end; margin-bottom: 40px; }
       .section-heading h2 { max-width: 12ch; margin-bottom: 0; font-size: clamp(2.4rem, 5vw, 4.5rem); line-height: 0.98; }
       .section-heading p { max-width: 52ch; margin-bottom: 4px; color: var(--muted); line-height: 1.6; }
+      .sample-next-step { display: flex; align-items: center; gap: 18px; margin-top: 24px; }
+      .sample-next-step .primary-action { min-height: 50px; white-space: nowrap; }
+      .sample-next-step p { max-width: 32ch; margin: 0; font-size: 0.78rem; line-height: 1.45; }
       .overview { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 48px; border-block: 1px solid var(--line); }
       .overview div { padding: 28px 0; }
       .overview div + div { padding-left: 28px; border-left: 1px solid var(--line); }
@@ -138,6 +141,7 @@
         .preview-screen { width: 88%; padding: 18px; }
         .mismatch-flag { right: -8px; }
         .results { padding: 64px 0 72px; }
+        .sample-next-step { align-items: flex-start; flex-direction: column; }
         .overview { grid-template-columns: 1fr; }
         .overview div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
         .screen-list { grid-template-columns: 1fr; }
@@ -177,7 +181,16 @@
 
       <section class="results" id="results" hidden aria-labelledby="results-title">
         <div class="shell">
-          <div class="section-heading"><h2 id="results-title">Your TinyDB map.</h2><p>The first proof path focuses on literal StoreValue and GetValue tags, so the result stays explainable and easy to verify.</p></div>
+          <div class="section-heading">
+            <h2 id="results-title">Your TinyDB map.</h2>
+            <div>
+              <p>The first proof path focuses on literal StoreValue and GetValue tags, so the result stays explainable and easy to verify.</p>
+              <div class="sample-next-step" id="sample-next-step" hidden>
+                <button class="primary-action" id="audit-own-button" type="button" aria-describedby="own-audit-privacy">Audit your own .aia</button>
+                <p id="own-audit-privacy">Your file is read in this browser and never uploaded.</p>
+              </div>
+            </div>
+          </div>
           <div class="overview" id="overview"></div>
           <div class="screen-list" id="screen-list"></div>
           <div class="repair">

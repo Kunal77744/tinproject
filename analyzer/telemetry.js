@@ -24,7 +24,20 @@ export function createAuditCompletionTracker(capture) {
     completedRuns.add(runId);
 
     if (typeof capture === "function") {
-      capture("tinydb_audit_completed", properties);
+      const safeProperties = {
+        route: properties.route,
+        source: properties.source,
+        screens_mapped: properties.screens_mapped,
+        tag_spellings: properties.tag_spellings,
+        likely_mismatches: properties.likely_mismatches,
+      };
+
+      capture(
+        "tinydb_audit_completed",
+        Object.fromEntries(
+          Object.entries(safeProperties).filter(([, value]) => value !== undefined),
+        ),
+      );
     }
 
     return true;
