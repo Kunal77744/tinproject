@@ -1,6 +1,6 @@
 import { analyzeAia } from "./parser.js";
 import { guidanceForAuditError } from "./error-guidance.js";
-import { createAuditCompletionTracker } from "./telemetry.js";
+import { createAuditCompletionTracker, createAuditStartTracker } from "./telemetry.js";
 
 const sampleButton = document.querySelector("#sample-button");
 const fileInput = document.querySelector("#project-file");
@@ -10,9 +10,11 @@ const overview = document.querySelector("#overview");
 const screenList = document.querySelector("#screen-list");
 const checklist = document.querySelector("#checklist");
 let auditRun = 0;
-const captureAuditCompleted = createAuditCompletionTracker((event, properties) => {
+const captureAuditEvent = (event, properties) => {
   window.posthog?.capture?.(event, properties);
-});
+};
+const captureAuditStarted = createAuditStartTracker(captureAuditEvent);
+const captureAuditCompleted = createAuditCompletionTracker(captureAuditEvent);
 
 function escapeHtml(value) {
   return String(value)
@@ -75,6 +77,10 @@ function renderAudit(audit, projectName) {
 
 async function runAudit(buffer, projectName, source) {
   const runId = ++auditRun;
+  captureAuditStarted(runId, {
+    route: window.location.pathname,
+    source,
+  });
   status.textContent = `Inspecting ${projectName} locally…`;
   results.hidden = true;
 

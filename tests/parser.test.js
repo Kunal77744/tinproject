@@ -4,7 +4,10 @@ import test from "node:test";
 
 import { analyzeAia, buildAudit, extractTinyDbUsage } from "../analyzer/parser.js";
 import { guidanceForAuditError } from "../analyzer/error-guidance.js";
-import { createAuditCompletionTracker } from "../analyzer/telemetry.js";
+import {
+  createAuditCompletionTracker,
+  createAuditStartTracker,
+} from "../analyzer/telemetry.js";
 
 const screenOne = `
   <xml xmlns="https://developers.google.com/blockly/xml">
@@ -82,6 +85,35 @@ test("records one completion event for each successful audit run", () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].event, "tinydb_audit_completed");
   assert.deepEqual(events[0].properties, { source: "sample" });
+});
+
+test("records one privacy-safe start event for each audit run", () => {
+  const events = [];
+  const trackStart = createAuditStartTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackStart(1, {
+      route: "/analyzer/",
+      source: "sample",
+      project_name: "must not be captured",
+    }),
+    true,
+  );
+  assert.equal(trackStart(1, { route: "/analyzer/", source: "sample" }), false);
+  assert.equal(trackStart(2, { route: "/analyzer/", source: "local_file" }), true);
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_audit_started",
+      properties: { route: "/analyzer/", source: "sample" },
+    },
+    {
+      event: "tinydb_audit_started",
+      properties: { route: "/analyzer/", source: "local_file" },
+    },
+  ]);
 });
 
 test("gives invalid archives an export-and-retry step", async () => {
