@@ -12,6 +12,7 @@ import {
 import {
   createFullReportMailto,
   createRepairSummary,
+  shouldOfferLocalAudit,
   SUPPORT_ADDRESS,
 } from "../analyzer/result-actions.js";
 
@@ -126,6 +127,41 @@ test("records one completion event for each successful audit run", () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].event, "tinydb_audit_completed");
   assert.deepEqual(events[0].properties, { source: "sample" });
+});
+
+test("keeps local-file completion analytics free of filenames and project contents", () => {
+  const events = [];
+  const trackCompletion = createAuditCompletionTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  trackCompletion(1, {
+    route: "/analyzer/",
+    source: "local_file",
+    screens_mapped: 2,
+    tag_spellings: 2,
+    likely_mismatches: 1,
+    project_name: "private-project.aia",
+    tags: ["private_tag"],
+  });
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_audit_completed",
+      properties: {
+        route: "/analyzer/",
+        source: "local_file",
+        screens_mapped: 2,
+        tag_spellings: 2,
+        likely_mismatches: 1,
+      },
+    },
+  ]);
+});
+
+test("offers a real local audit only after the prepared sample", () => {
+  assert.equal(shouldOfferLocalAudit("sample"), true);
+  assert.equal(shouldOfferLocalAudit("local_file"), false);
 });
 
 test("records one privacy-safe start event for each audit run", () => {

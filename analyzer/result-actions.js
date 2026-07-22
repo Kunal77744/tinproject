@@ -1,5 +1,9 @@
 export const SUPPORT_ADDRESS = "tinproject-ydbq@mail.tin.computer";
 
+export function shouldOfferLocalAudit(source) {
+  return source === "sample";
+}
+
 export function createRepairSummary(audit) {
   const heading = "TinyDB repair summary";
   const steps = audit.issues.length

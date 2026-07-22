@@ -1,6 +1,10 @@
 import { analyzeAia } from "./parser.js";
 import { guidanceForAuditError } from "./error-guidance.js";
-import { createFullReportMailto, createRepairSummary } from "./result-actions.js";
+import {
+  createFullReportMailto,
+  createRepairSummary,
+  shouldOfferLocalAudit,
+} from "./result-actions.js";
 import {
   createAuditCompletionTracker,
   createAuditStartTracker,
@@ -17,6 +21,8 @@ const checklist = document.querySelector("#checklist");
 const copySummaryButton = document.querySelector("#copy-summary");
 const copyStatus = document.querySelector("#copy-status");
 const fullReportLink = document.querySelector("#full-report-link");
+const sampleNextStep = document.querySelector("#sample-next-step");
+const auditOwnButton = document.querySelector("#audit-own-button");
 let auditRun = 0;
 let activeResult = null;
 const captureAuditEvent = (event, properties) => {
@@ -89,6 +95,7 @@ function renderAudit(audit, projectName, runId, source) {
     repairSummary: createRepairSummary(audit),
   };
   copyStatus.textContent = "";
+  sampleNextStep.hidden = !shouldOfferLocalAudit(source);
   results.hidden = false;
   results.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -101,6 +108,7 @@ async function runAudit(buffer, projectName, source) {
   });
   status.textContent = `Inspecting ${projectName} locally…`;
   results.hidden = true;
+  sampleNextStep.hidden = true;
   activeResult = null;
 
   try {
@@ -136,6 +144,11 @@ fullReportLink.addEventListener("click", () => {
     route: window.location.pathname,
     source: activeResult.source,
   });
+});
+
+auditOwnButton.addEventListener("click", () => {
+  fileInput.value = "";
+  fileInput.click();
 });
 
 async function runSampleAudit() {
