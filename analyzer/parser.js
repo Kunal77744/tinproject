@@ -117,7 +117,6 @@ function componentMethodFragments(xml) {
 
       if (depth === 0) {
         fragments.push(xml.slice(opening.index, tokenPattern.lastIndex));
-        openingPattern.lastIndex = tokenPattern.lastIndex;
         break;
       }
     }
