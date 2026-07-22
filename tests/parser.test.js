@@ -27,6 +27,22 @@ const screenTwo = `
     </block>
   </xml>`;
 
+const chainedTinyDbCalls = `
+  <xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="component_method" id="store-id">
+      <mutation component_type="TinyDB" method_name="StoreValue" />
+      <value name="ARG0"><block type="text"><field name="TEXT">ID</field></block></value>
+      <value name="ARG1"><block type="text"><field name="TEXT">123</field></block></value>
+      <next>
+        <block type="component_method" id="store-password">
+          <mutation component_type="TinyDB" method_name="StoreValue" />
+          <value name="ARG0"><block type="text"><field name="TEXT">PW</field></block></value>
+          <value name="ARG1"><block type="text"><field name="TEXT">secret</field></block></value>
+        </block>
+      </next>
+    </block>
+  </xml>`;
+
 test("extracts literal TinyDB operations from App Inventor blocks", () => {
   assert.deepEqual(extractTinyDbUsage(screenOne, "Screen1"), [
     {
@@ -45,6 +61,25 @@ test("extracts literal TinyDB operations from App Inventor blocks", () => {
       operation: "get",
       defaultValue: "Unknown",
       blockId: "get-profile",
+    },
+  ]);
+});
+
+test("extracts every TinyDB operation in a chained block stack", () => {
+  assert.deepEqual(extractTinyDbUsage(chainedTinyDbCalls, "DeviceSetup"), [
+    {
+      screen: "DeviceSetup",
+      tag: "ID",
+      operation: "store",
+      defaultValue: null,
+      blockId: "store-id",
+    },
+    {
+      screen: "DeviceSetup",
+      tag: "PW",
+      operation: "store",
+      defaultValue: null,
+      blockId: "store-password",
     },
   ]);
 });
