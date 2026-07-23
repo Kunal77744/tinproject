@@ -1,3 +1,5 @@
+import { auditErrorCode } from "./error-guidance.js";
+
 export function createAuditStartTracker(capture) {
   const startedRuns = new Set();
 
@@ -9,6 +11,25 @@ export function createAuditStartTracker(capture) {
       capture("tinydb_audit_started", {
         route: properties.route,
         source: properties.source,
+      });
+    }
+
+    return true;
+  };
+}
+
+export function createAuditFailureTracker(capture) {
+  const failedRuns = new Set();
+
+  return (runId, properties) => {
+    if (failedRuns.has(runId)) return false;
+    failedRuns.add(runId);
+
+    if (typeof capture === "function") {
+      capture("tinydb_audit_failed", {
+        route: properties.route,
+        source: properties.source,
+        error_code: auditErrorCode({ code: properties.error_code }),
       });
     }
 
