@@ -8,6 +8,7 @@ import {
   createAuditCompletionTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
+  createRealProjectCompletionTracker,
 } from "../analyzer/telemetry.js";
 import {
   createFullReportMailto,
@@ -157,6 +158,75 @@ test("keeps local-file completion analytics free of filenames and project conten
       },
     },
   ]);
+});
+
+test("records one dedicated real-project event for a successful local-file audit", () => {
+  const events = [];
+  const trackRealProjectCompletion = createRealProjectCompletionTracker(
+    (event, properties) => events.push({ event, properties }),
+  );
+
+  assert.equal(
+    trackRealProjectCompletion(1, {
+      route: "/analyzer/",
+      source: "local_file",
+      succeeded: true,
+      project_name: "private-project.aia",
+      tags: ["private_tag"],
+    }),
+    true,
+  );
+  assert.equal(
+    trackRealProjectCompletion(1, {
+      route: "/analyzer/",
+      source: "local_file",
+      succeeded: true,
+    }),
+    false,
+  );
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_real_project_audit_completed",
+      properties: { route: "/analyzer/", source: "local_file" },
+    },
+  ]);
+});
+
+test("never records the real-project event for the prepared sample", () => {
+  const events = [];
+  const trackRealProjectCompletion = createRealProjectCompletionTracker(
+    (event, properties) => events.push({ event, properties }),
+  );
+
+  assert.equal(
+    trackRealProjectCompletion(1, {
+      route: "/analyzer/",
+      source: "sample",
+      succeeded: true,
+    }),
+    false,
+  );
+  assert.deepEqual(events, []);
+});
+
+test("never records the real-project event when a local audit fails", async () => {
+  const events = [];
+  const trackRealProjectCompletion = createRealProjectCompletionTracker(
+    (event, properties) => events.push({ event, properties }),
+  );
+
+  await assert.rejects(analyzeAia(new TextEncoder().encode("not a zip archive")));
+
+  assert.equal(
+    trackRealProjectCompletion(1, {
+      route: "/analyzer/",
+      source: "local_file",
+      succeeded: false,
+    }),
+    false,
+  );
+  assert.deepEqual(events, []);
 });
 
 test("offers a real local audit only after the prepared sample", () => {

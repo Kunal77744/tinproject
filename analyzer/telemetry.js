@@ -44,6 +44,30 @@ export function createAuditCompletionTracker(capture) {
   };
 }
 
+export function createRealProjectCompletionTracker(capture) {
+  const completedRuns = new Set();
+
+  return (runId, properties) => {
+    if (
+      properties.source !== "local_file" ||
+      properties.succeeded !== true ||
+      completedRuns.has(runId)
+    ) {
+      return false;
+    }
+    completedRuns.add(runId);
+
+    if (typeof capture === "function") {
+      capture("tinydb_real_project_audit_completed", {
+        route: properties.route,
+        source: properties.source,
+      });
+    }
+
+    return true;
+  };
+}
+
 export function createPaidReportInterestTracker(capture) {
   const interestedRuns = new Set();
 

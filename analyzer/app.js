@@ -9,6 +9,7 @@ import {
   createAuditCompletionTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
+  createRealProjectCompletionTracker,
 } from "./telemetry.js";
 
 const sampleButton = document.querySelector("#sample-button");
@@ -30,6 +31,9 @@ const captureAuditEvent = (event, properties) => {
 };
 const captureAuditStarted = createAuditStartTracker(captureAuditEvent);
 const captureAuditCompleted = createAuditCompletionTracker(captureAuditEvent);
+const captureRealProjectCompleted = createRealProjectCompletionTracker(
+  captureAuditEvent,
+);
 const capturePaidReportInterest = createPaidReportInterestTracker(captureAuditEvent);
 
 fullReportLink.href = createFullReportMailto();
@@ -120,6 +124,11 @@ async function runAudit(buffer, projectName, source) {
       screens_mapped: audit.screens.length,
       tag_spellings: new Set(audit.usages.map(({ tag }) => tag)).size,
       likely_mismatches: audit.issues.length,
+    });
+    captureRealProjectCompleted(runId, {
+      route: window.location.pathname,
+      source,
+      succeeded: true,
     });
   } catch (error) {
     status.textContent = guidanceForAuditError(error);
