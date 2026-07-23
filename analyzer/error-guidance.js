@@ -9,9 +9,23 @@ const guidance = {
     "We opened the project, but found no literal TinyDB StoreValue or GetValue tags to map. If your tags use variables or text joins, review them manually because this audit doesn't analyze dynamic tags yet.",
 };
 
+export function auditErrorCode(error) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    Object.hasOwn(guidance, error.code)
+  ) {
+    return error.code;
+  }
+
+  return "unknown_error";
+}
+
 export function guidanceForAuditError(error) {
-  if (error && typeof error === "object" && "code" in error && guidance[error.code]) {
-    return guidance[error.code];
+  const errorCode = auditErrorCode(error);
+  if (errorCode !== "unknown_error") {
+    return guidance[errorCode];
   }
 
   return "We couldn't inspect this project. Export a fresh .aia from App Inventor and try again.";

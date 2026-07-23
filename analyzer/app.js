@@ -7,6 +7,7 @@ import {
 } from "./result-actions.js";
 import {
   createAuditCompletionTracker,
+  createAuditFailureTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
   createRealProjectCompletionTracker,
@@ -31,6 +32,7 @@ const captureAuditEvent = (event, properties) => {
 };
 const captureAuditStarted = createAuditStartTracker(captureAuditEvent);
 const captureAuditCompleted = createAuditCompletionTracker(captureAuditEvent);
+const captureAuditFailed = createAuditFailureTracker(captureAuditEvent);
 const captureRealProjectCompleted = createRealProjectCompletionTracker(
   captureAuditEvent,
 );
@@ -132,6 +134,11 @@ async function runAudit(buffer, projectName, source) {
     });
   } catch (error) {
     status.textContent = guidanceForAuditError(error);
+    captureAuditFailed(runId, {
+      route: window.location.pathname,
+      source,
+      error_code: error?.code,
+    });
   }
 }
 

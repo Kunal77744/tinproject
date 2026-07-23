@@ -3,9 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { analyzeAia, buildAudit, extractTinyDbUsage } from "../analyzer/parser.js";
-import { guidanceForAuditError } from "../analyzer/error-guidance.js";
+import { auditErrorCode, guidanceForAuditError } from "../analyzer/error-guidance.js";
 import {
   createAuditCompletionTracker,
+  createAuditFailureTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
   createRealProjectCompletionTracker,
@@ -263,6 +264,103 @@ test("records one privacy-safe start event for each audit run", () => {
   ]);
 });
 
+test("records one privacy-safe failure event for sample and local-file runs", () => {
+  const events = [];
+  const trackFailure = createAuditFailureTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackFailure(1, {
+      route: "/analyzer/",
+      source: "sample",
+      error_code: "invalid_project",
+      project_name: "must not be captured",
+      message: "must not be captured",
+    }),
+    true,
+  );
+  assert.equal(
+    trackFailure(2, {
+      route: "/analyzer/",
+      source: "local_file",
+      error_code: "invalid_archive",
+      filename: "private-project.aia",
+      stack: "must not be captured",
+    }),
+    true,
+  );
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_audit_failed",
+      properties: {
+        route: "/analyzer/",
+        source: "sample",
+        error_code: "invalid_project",
+      },
+    },
+    {
+      event: "tinydb_audit_failed",
+      properties: {
+        route: "/analyzer/",
+        source: "local_file",
+        error_code: "invalid_archive",
+      },
+    },
+  ]);
+});
+
+test("deduplicates failures and replaces arbitrary error text with a safe code", () => {
+  const events = [];
+  const trackFailure = createAuditFailureTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackFailure(1, {
+      route: "/analyzer/",
+      source: "local_file",
+      error_code: "private customer content",
+    }),
+    true,
+  );
+  assert.equal(
+    trackFailure(1, {
+      route: "/analyzer/",
+      source: "local_file",
+      error_code: "unsupported_compression",
+    }),
+    false,
+  );
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_audit_failed",
+      properties: {
+        route: "/analyzer/",
+        source: "local_file",
+        error_code: "unknown_error",
+      },
+    },
+  ]);
+});
+
+test("successful audit tracking does not emit a failure event", () => {
+  const events = [];
+  const trackCompletion = createAuditCompletionTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  trackCompletion(1, {
+    route: "/analyzer/",
+    source: "sample",
+    screens_mapped: 2,
+  });
+
+  assert.equal(events.some(({ event }) => event === "tinydb_audit_failed"), false);
+});
+
 test("builds a copyable summary from only the visible repair result", () => {
   const audit = buildAudit([
     ...extractTinyDbUsage(screenOne, "Screen1"),
@@ -333,6 +431,13 @@ test("explains what to try when archive compression is unsupported", () => {
   assert.match(message, /compression/);
   assert.match(message, /Re-export/);
   assert.match(message, /Chrome or Edge/);
+});
+
+test("maps unrecognized audit failures to an allow-listed fallback code", () => {
+  assert.equal(auditErrorCode({ code: "invalid_archive" }), "invalid_archive");
+  assert.equal(auditErrorCode({ code: "contains private details" }), "unknown_error");
+  assert.equal(auditErrorCode({ code: "__proto__" }), "unknown_error");
+  assert.equal(auditErrorCode(new Error("contains private details")), "unknown_error");
 });
 
 test("does not imply a project is bug-free when no literal tags are found", () => {
