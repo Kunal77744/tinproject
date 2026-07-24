@@ -5,9 +5,9 @@ import test from "node:test";
 const pages = [
   {
     path: new URL("../index.html", import.meta.url),
-    title: "App Inventor TinyDB Multiple Screens | TinyDB Inspector",
+    title: "TinyDB Inspector for App Inventor Projects",
     description:
-      "Debug TinyDB across multiple App Inventor screens. See literal StoreValue and GetValue tags, spot likely naming mismatches, and follow a clear repair step.",
+      "Inspect literal TinyDB tags in an App Inventor .aia project, catch likely naming mismatches, and get a focused repair step without uploading.",
   },
   {
     path: new URL("../analyzer/index.html", import.meta.url),
@@ -20,6 +20,25 @@ const pages = [
     title: "TinyDB UI for App Inventor and Kodular | TinyDB Inspector",
     description:
       "See how a browser-based TinyDB UI maps literal StoreValue and GetValue tags across App Inventor and Kodular screens and highlights likely naming mismatches.",
+  },
+  {
+    path: new URL(
+      "../app-inventor-tinydb-not-working/index.html",
+      import.meta.url,
+    ),
+    title: "App Inventor TinyDB Not Working? Debug It | TinyDB Inspector",
+    description:
+      "App Inventor TinyDB not working? Check why data is not storing or retrieving, repair cross-screen tag mismatches, and run a private literal-tag audit.",
+  },
+  {
+    path: new URL(
+      "../app-inventor-tinydb-multiple-screens/index.html",
+      import.meta.url,
+    ),
+    title:
+      "App Inventor TinyDB Multiple Screens: Fix Tags | TinyDB Inspector",
+    description:
+      "Fix App Inventor TinyDB across multiple screens. Compare literal StoreValue and GetValue tags, rename mismatches, and retest the same data flow.",
   },
 ];
 

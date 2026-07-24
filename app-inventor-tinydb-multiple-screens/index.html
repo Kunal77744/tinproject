@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="Fix App Inventor TinyDB across multiple screens. Compare literal StoreValue and GetValue tags, rename mismatches, and retest the same data flow."
+    >
+    <link
+      rel="canonical"
+      href="https://tinproject-ydbq.vercel.app/app-inventor-tinydb-multiple-screens/"
+    >
+    <meta property="og:type" content="article">
+    <meta
+      property="og:title"
+      content="App Inventor TinyDB Multiple Screens: Fix Tag Mismatches"
+    >
+    <meta
+      property="og:description"
+      content="A focused repair walkthrough for TinyDB values that store on one App Inventor screen but fail to load on another."
+    >
+    <meta
+      property="og:url"
+      content="https://tinproject-ydbq.vercel.app/app-inventor-tinydb-multiple-screens/"
+    >
+    <title>App Inventor TinyDB Multiple Screens: Fix Tags | TinyDB Inspector</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316724a'/%3E%3Cpath d='M9 10h14v4H9zm0 8h9v4H9z' fill='%23f7f5ef'/%3E%3C/svg%3E"
+    >
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Article",
+            "headline": "How to fix App Inventor TinyDB across multiple screens",
+            "description": "A focused repair walkthrough for literal TinyDB StoreValue and GetValue tag mismatches across App Inventor screens.",
+            "datePublished": "2026-07-24",
+            "dateModified": "2026-07-24",
+            "mainEntityOfPage": "https://tinproject-ydbq.vercel.app/app-inventor-tinydb-multiple-screens/",
+            "author": {
+              "@type": "Organization",
+              "name": "TinyDB Inspector"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "TinyDB Inspector"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Can App Inventor TinyDB work across multiple screens?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. A TinyDB value can persist while an App Inventor app changes screens. The GetValue block must ask for the exact same tag text that StoreValue used."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Why does TinyDB return the default on the second screen?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A common cause is a literal tag mismatch. Compare spelling, case, punctuation, and spaces in the StoreValue and GetValue tags, then store a fresh test value after the names match."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can the analyzer check Kodular TinyDB projects?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The same exact-tag repair rule is useful when debugging Kodular TinyDB across multiple screens, but the current analyzer is tested primarily with App Inventor archives and does not claim full Kodular compatibility."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+    <script defer src="/analytics.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --canvas: #f7f5ef;
+        --surface: #fffdf8;
+        --surface-strong: #eef5ef;
+        --ink: #142820;
+        --muted: #596a62;
+        --line: #cdd8d0;
+        --accent: #16724a;
+        --accent-strong: #0f5a39;
+        --accent-soft: #dcebe1;
+        --warning: #9b5124;
+        --warning-soft: #fff0e4;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        background: var(--canvas);
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      code {
+        padding: 0.1em 0.32em;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        color: var(--ink);
+        background: var(--surface);
+        font-size: 0.92em;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+      }
+
+      .site-header {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 32px;
+        min-height: 88px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--accent);
+        box-shadow: 16px 0 0 var(--accent-soft);
+      }
+
+      .site-nav {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+      }
+
+      .nav-link,
+      .footer-link {
+        color: var(--muted);
+        font-size: 0.86rem;
+        text-decoration: none;
+      }
+
+      .nav-link:hover,
+      .footer-link:hover,
+      .related-link:hover {
+        color: var(--accent);
+      }
+
+      .header-cta,
+      .primary-cta {
+        display: inline-flex;
+        min-height: 46px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        border: 1px solid var(--accent);
+        border-radius: 9px;
+        color: #fffdf8;
+        background: var(--accent);
+        font-size: 0.9rem;
+        font-weight: 750;
+        text-decoration: none;
+        transition:
+          background 160ms ease-out,
+          border-color 160ms ease-out,
+          transform 160ms ease-out;
+      }
+
+      .header-cta:hover,
+      .primary-cta:hover {
+        border-color: var(--accent-strong);
+        background: var(--accent-strong);
+        transform: translateY(-1px);
+      }
+
+      .header-cta:active,
+      .primary-cta:active {
+        transform: translateY(0);
+      }
+
+      .header-cta:focus-visible,
+      .primary-cta:focus-visible,
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid rgba(22, 114, 74, 0.28);
+        outline-offset: 3px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.94fr) minmax(420px, 1.06fr);
+        gap: 72px;
+        align-items: center;
+        padding: 88px 0 96px;
+      }
+
+      .eyebrow,
+      .section-label,
+      .flow-label,
+      .limit-label {
+        margin: 0;
+        color: var(--accent);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        text-wrap: pretty;
+      }
+
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        letter-spacing: -0.035em;
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 11ch;
+        margin: 18px 0 24px;
+        font-size: clamp(3.35rem, 6.1vw, 6.65rem);
+        font-weight: 500;
+        line-height: 0.93;
+      }
+
+      h2 {
+        max-width: 18ch;
+        margin: 10px 0 16px;
+        font-size: clamp(2.15rem, 4vw, 4rem);
+        font-weight: 500;
+        line-height: 1.02;
+      }
+
+      h3 {
+        margin: 0 0 10px;
+        font-size: 1.08rem;
+        line-height: 1.25;
+      }
+
+      .subhead,
+      .section-heading p,
+      .step-copy p,
+      .limit-card p,
+      .kodular-copy p,
+      .faq-intro,
+      details p,
+      .final-note p {
+        max-width: 62ch;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .subhead {
+        max-width: 55ch;
+        margin: 0;
+        font-size: 1.08rem;
+      }
+
+      .cta-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 32px;
+      }
+
+      .cta-note {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .diagnostic {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 253, 248, 0.72);
+        box-shadow: 0 24px 70px rgba(20, 40, 32, 0.09);
+      }
+
+      .diagnostic-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 12px 18px;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.74rem;
+      }
+
+      .privacy-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--accent);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-weight: 750;
+      }
+
+      .privacy-state::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        content: "";
+      }
+
+      .flow-card {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        background: var(--surface);
+      }
+
+      .flow-grid {
+        display: grid;
+        grid-template-columns: 1fr 52px 1fr;
+        align-items: stretch;
+        margin-top: 18px;
+      }
+
+      .screen-card {
+        min-width: 0;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--canvas);
+      }
+
+      .screen-card.problem {
+        border-color: #e4b28f;
+        background: var(--warning-soft);
+      }
+
+      .screen-name {
+        display: block;
+        margin-bottom: 16px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .block-name {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      .tag-name {
+        display: block;
+        overflow-wrap: anywhere;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.96rem;
+        font-weight: 750;
+      }
+
+      .tag-difference {
+        color: var(--warning);
+        background: #ffe3cf;
+      }
+
+      .flow-arrow {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--warning);
+        font-size: 1.1rem;
+      }
+
+      .flow-arrow::before {
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        background: #d7ae92;
+        content: "";
+      }
+
+      .flow-arrow span {
+        z-index: 1;
+        padding: 0 6px;
+        background: var(--surface);
+      }
+
+      .finding {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: start;
+        margin-top: 14px;
+        padding: 16px 18px;
+        border-radius: 12px;
+        background: var(--surface-strong);
+      }
+
+      .finding-mark {
+        display: inline-grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 50%;
+        color: var(--surface);
+        background: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .finding p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+
+      .section {
+        padding: 88px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(300px, 0.7fr);
+        gap: 64px;
+        align-items: end;
+        margin-bottom: 48px;
+      }
+
+      .section-heading p {
+        margin: 0 0 8px;
+      }
+
+      .rule-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.78fr);
+        gap: 24px;
+      }
+
+      .rule-card,
+      .limits,
+      .kodular-panel {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--surface);
+      }
+
+      .rule-card {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 28px;
+        align-items: start;
+        min-height: 310px;
+        padding: 36px;
+      }
+
+      .rule-number {
+        color: var(--accent);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 3rem;
+        line-height: 1;
+      }
+
+      .rule-card h3 {
+        max-width: 22ch;
+        margin-bottom: 16px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.9rem;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+
+      .rule-card p {
+        max-width: 50ch;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .exact-list {
+        display: grid;
+        gap: 10px;
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .exact-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .exact-list li::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        content: "";
+      }
+
+      .rule-aside {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 32px;
+        border-radius: 18px;
+        color: var(--surface);
+        background: var(--ink);
+      }
+
+      .rule-aside p {
+        max-width: 32ch;
+        margin: 0;
+        color: #cbd7d0;
+        line-height: 1.6;
+      }
+
+      .rule-aside code {
+        border-color: rgba(255, 255, 255, 0.18);
+        color: #fffdf8;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .aside-pair {
+        display: grid;
+        gap: 10px;
+        margin-top: 32px;
+      }
+
+      .aside-pair span {
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.82rem;
+      }
+
+      .repair-list {
+        display: grid;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        border-top: 1px solid var(--line);
+        list-style: none;
+      }
+
+      .repair-list li {
+        display: grid;
+        grid-template-columns: 68px minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: start;
+        padding: 30px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .step-number {
+        color: var(--accent);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.55rem;
+      }
+
+      .step-copy h3 {
+        margin-bottom: 7px;
+      }
+
+      .step-copy p {
+        max-width: 64ch;
+        margin: 0;
+      }
+
+      .step-result {
+        min-width: 142px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-align: right;
+        text-transform: uppercase;
+      }
+
+      .kodular-panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.75fr);
+        overflow: hidden;
+      }
+
+      .kodular-copy {
+        padding: 46px;
+      }
+
+      .kodular-copy h2 {
+        max-width: 14ch;
+      }
+
+      .kodular-note {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 40px;
+        background: var(--surface-strong);
+      }
+
+      .kodular-note strong {
+        display: block;
+        margin-bottom: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.45rem;
+        font-weight: 500;
+      }
+
+      .kodular-note p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .limits {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        overflow: hidden;
+      }
+
+      .limit-card {
+        padding: 38px;
+      }
+
+      .limit-card + .limit-card {
+        border-left: 1px solid var(--line);
+        background: #fbf1e8;
+      }
+
+      .limit-card h3 {
+        margin-top: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.55rem;
+        font-weight: 500;
+      }
+
+      .limit-card p {
+        margin-bottom: 0;
+      }
+
+      .related-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 24px;
+        color: var(--accent);
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .faq-layout {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.65fr) minmax(0, 1fr);
+        gap: 72px;
+      }
+
+      .faq-intro {
+        margin: 0;
+      }
+
+      .faq-list {
+        border-top: 1px solid var(--line);
+      }
+
+      details {
+        border-bottom: 1px solid var(--line);
+      }
+
+      summary {
+        display: flex;
+        min-height: 74px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 16px 0;
+        cursor: pointer;
+        font-weight: 750;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        color: var(--accent);
+        font-size: 1.2rem;
+        content: "+";
+      }
+
+      details[open] summary::after {
+        content: "−";
+      }
+
+      details p {
+        margin: -4px 0 24px;
+        padding-right: 44px;
+      }
+
+      .final-note {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 48px;
+        align-items: center;
+        padding: 52px;
+        border-radius: 20px;
+        color: var(--surface);
+        background: var(--ink);
+      }
+
+      .final-note h2 {
+        max-width: 17ch;
+        margin-top: 0;
+        color: var(--surface);
+      }
+
+      .final-note p {
+        margin-bottom: 0;
+        color: #cbd7d0;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-inner {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 24px;
+        align-items: center;
+        padding: 34px 0;
+      }
+
+      .footer-brand {
+        display: grid;
+        gap: 4px;
+      }
+
+      .footer-brand strong {
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .footer-brand span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .footer-credit {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-decoration: none;
+      }
+
+      .tin-mark {
+        width: 0.9em;
+        height: 0.9em;
+        background: #66dc9d;
+      }
+
+      @media (max-width: 940px) {
+        .site-nav {
+          display: none;
+        }
+
+        .site-header {
+          grid-template-columns: 1fr auto;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 48px;
+        }
+
+        h1 {
+          max-width: 13ch;
+        }
+
+        .section-heading,
+        .rule-grid,
+        .kodular-panel,
+        .faq-layout {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .limits {
+          grid-template-columns: 1fr;
+        }
+
+        .limit-card + .limit-card {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .footer-inner {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .shell {
+          width: min(100% - 32px, 1180px);
+        }
+
+        .header-cta {
+          min-height: 42px;
+          padding: 0 14px;
+          font-size: 0.78rem;
+        }
+
+        .hero {
+          padding: 58px 0 72px;
+        }
+
+        h1 {
+          font-size: clamp(3.1rem, 15.5vw, 4.65rem);
+        }
+
+        .cta-group {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .flow-card,
+        .rule-card,
+        .rule-aside,
+        .kodular-copy,
+        .kodular-note,
+        .limit-card {
+          padding: 24px;
+        }
+
+        .flow-grid {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .flow-arrow {
+          min-height: 28px;
+          transform: rotate(90deg);
+        }
+
+        .rule-card {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+
+        .section {
+          padding: 70px 0;
+        }
+
+        .section-heading {
+          margin-bottom: 34px;
+        }
+
+        .repair-list li {
+          grid-template-columns: 44px 1fr;
+          gap: 14px;
+        }
+
+        .step-result {
+          grid-column: 2;
+          min-width: 0;
+          text-align: left;
+        }
+
+        .final-note {
+          grid-template-columns: 1fr;
+          padding: 34px 26px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="shell site-header">
+      <a class="brand" href="/" aria-label="TinyDB Inspector home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>TinyDB Inspector</span>
+      </a>
+      <nav class="site-nav" aria-label="Repair guide sections">
+        <a class="nav-link" href="#exact-tag-rule">Exact-tag rule</a>
+        <a class="nav-link" href="#repair">Repair steps</a>
+        <a class="nav-link" href="#kodular">Kodular note</a>
+      </nav>
+      <a
+        class="header-cta"
+        href="/analyzer/?source=cross-screen-guide-header"
+        >Check my tags</a
+      >
+    </header>
+
+    <main>
+      <section class="shell hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">App Inventor TinyDB multiple screens</p>
+          <h1 id="hero-title">Fix TinyDB between screens.</h1>
+          <p class="subhead">
+            When Screen1 stores a value and Screen2 returns the fallback, compare
+            the literal tag names before rebuilding your blocks. One changed
+            character can split a single data flow into two different tags.
+          </p>
+          <div class="cta-group">
+            <a
+              class="primary-cta"
+              href="/analyzer/?source=cross-screen-guide"
+              >Check my literal tags</a
+            >
+            <span class="cta-note">Your exported .aia stays in your browser.</span>
+          </div>
+        </div>
+
+        <aside
+          class="diagnostic"
+          aria-label="Example of a TinyDB tag mismatch between two App Inventor screens"
+        >
+          <div class="diagnostic-bar">
+            <span>project / cross-screen-check</span>
+            <span class="privacy-state">local only</span>
+          </div>
+          <div class="flow-card">
+            <p class="flow-label">One value, two tag names</p>
+            <div class="flow-grid">
+              <div class="screen-card">
+                <span class="screen-name">Screen1</span>
+                <span class="block-name">TinyDB1.StoreValue</span>
+                <span class="tag-name">profile_name</span>
+              </div>
+              <div class="flow-arrow" aria-hidden="true"><span>→</span></div>
+              <div class="screen-card problem">
+                <span class="screen-name">Screen2</span>
+                <span class="block-name">TinyDB1.GetValue</span>
+                <span class="tag-name">profile<span class="tag-difference">-</span>name</span>
+              </div>
+            </div>
+            <div class="finding">
+              <span class="finding-mark">1</span>
+              <div>
+                <strong>Likely naming mismatch</strong>
+                <p>
+                  Rename <code>profile-name</code> to
+                  <code>profile_name</code>, store a fresh value, then retest
+                  both screens.
+                </p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="exact-tag-rule" class="section">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">The cross-screen rule</p>
+              <h2>Shared data still needs an exact name.</h2>
+            </div>
+            <p>
+              TinyDB can preserve a value while your app changes screens. The
+              second screen only retrieves that value when GetValue asks for the
+              exact tag StoreValue wrote.
+            </p>
+          </div>
+
+          <div class="rule-grid">
+            <article class="rule-card">
+              <span class="rule-number">01</span>
+              <div>
+                <h3>Treat every tag as an exact address.</h3>
+                <p>
+                  App Inventor does not treat similar-looking literal tags as
+                  the same address. A change in case, spacing, punctuation, or
+                  spelling points GetValue somewhere else.
+                </p>
+                <ul class="exact-list">
+                  <li><code>profile_name</code> is not <code>profile-name</code></li>
+                  <li><code>PlayerScore</code> is not <code>playerscore</code></li>
+                  <li><code>user name</code> is not <code>username</code></li>
+                </ul>
+              </div>
+            </article>
+            <aside class="rule-aside" aria-label="Example of a matching TinyDB tag">
+              <p>
+                Choose one canonical tag, then use it everywhere that value is
+                stored or retrieved.
+              </p>
+              <div class="aside-pair">
+                <span>Screen1 / StoreValue / profile_name</span>
+                <span>Screen2 / GetValue / profile_name</span>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section id="repair" class="section">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Rename and retest</p>
+              <h2>A five-step TinyDB repair.</h2>
+            </div>
+            <p>
+              Change one thing at a time. That keeps a high-confidence tag fix
+              separate from defaults, event order, or other block behavior you
+              may need to inspect later.
+            </p>
+          </div>
+
+          <ol class="repair-list">
+            <li>
+              <span class="step-number">01</span>
+              <div class="step-copy">
+                <h3>Store one known test value on the first screen</h3>
+                <p>
+                  Use a simple value you can recognize, then follow the same
+                  screen path that currently fails.
+                </p>
+              </div>
+              <span class="step-result">Known starting point</span>
+            </li>
+            <li>
+              <span class="step-number">02</span>
+              <div class="step-copy">
+                <h3>Copy the literal StoreValue tag exactly</h3>
+                <p>
+                  Note every character, including uppercase letters, spaces,
+                  hyphens, and underscores.
+                </p>
+              </div>
+              <span class="step-result">Canonical tag</span>
+            </li>
+            <li>
+              <span class="step-number">03</span>
+              <div class="step-copy">
+                <h3>Compare the GetValue tag on the second screen</h3>
+                <p>
+                  Search all blocks involved in that data flow. Similar-looking
+                  text is not enough. The literal tag must match exactly.
+                </p>
+              </div>
+              <span class="step-result">Mismatch found</span>
+            </li>
+            <li>
+              <span class="step-number">04</span>
+              <div class="step-copy">
+                <h3>Rename only the mismatched tag</h3>
+                <p>
+                  Use the canonical spelling everywhere that value is stored or
+                  retrieved. Keep other logic unchanged for this test.
+                </p>
+              </div>
+              <span class="step-result">One controlled repair</span>
+            </li>
+            <li>
+              <span class="step-number">05</span>
+              <div class="step-copy">
+                <h3>Store fresh data and retest both screens</h3>
+                <p>
+                  Rerun the same path with a new value. If the exact tags now
+                  match but retrieval still fails, move to event order,
+                  dynamic-tag, and default-value checks manually.
+                </p>
+              </div>
+              <span class="step-result">Repair verified</span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="kodular" class="section">
+        <div class="shell">
+          <div class="kodular-panel">
+            <div class="kodular-copy">
+              <p class="section-label">Kodular wording</p>
+              <h2>Kodular TinyDB across multiple screens.</h2>
+              <p>
+                Kodular makers often describe the same symptom as using Tiny DB
+                over multiple Screens. The first manual check is the same:
+                compare the literal tag written on one Screen with the literal
+                tag read on the next, character for character.
+              </p>
+            </div>
+            <aside class="kodular-note">
+              <strong>Current analyzer boundary</strong>
+              <p>
+                TinyDB Inspector is tested primarily with App Inventor .aia
+                archives. It recognizes literal TinyDB StoreValue and GetValue
+                calls, but it does not claim full Kodular compatibility.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="limits-title">
+        <div class="shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">What to check next</p>
+              <h2 id="limits-title">Know where the literal-tag audit stops.</h2>
+            </div>
+            <p>
+              The analyzer answers one narrow question well. It maps literal
+              TinyDB reads and writes across screens and flags likely naming
+              variants without uploading the project.
+            </p>
+          </div>
+
+          <div class="limits">
+            <article class="limit-card">
+              <p class="limit-label">Covered now</p>
+              <h3>Literal StoreValue and GetValue tags</h3>
+              <p>
+                See which screens use each literal tag, catch likely case or
+                punctuation mismatches, and get a rename-and-retest repair step.
+              </p>
+            </article>
+            <article class="limit-card">
+              <p class="limit-label">Check manually</p>
+              <h3>Behavior around the tag</h3>
+              <p>
+                Inspect tags assembled from text blocks, value types, default
+                values, ClearTag or ClearAll calls, and the order your events
+                run. These checks are outside the current audit.
+              </p>
+              <a class="related-link" href="/app-inventor-tinydb-not-working/"
+                >Use the broader TinyDB debugging guide
+                <span aria-hidden="true">→</span></a
+              >
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <div class="shell faq-layout">
+          <div>
+            <p class="section-label">Quick answers</p>
+            <h2 id="faq-title">TinyDB multiple screens questions.</h2>
+            <p class="faq-intro">
+              Short answers for the decisions that usually slow down this repair.
+            </p>
+          </div>
+          <div class="faq-list">
+            <details>
+              <summary>Can App Inventor TinyDB work across multiple screens?</summary>
+              <p>
+                Yes. A stored TinyDB value can persist while the app changes
+                screens. The next screen must ask for the same tag text that was
+                used when the value was stored.
+              </p>
+            </details>
+            <details>
+              <summary>Why does Screen2 keep showing the default value?</summary>
+              <p>
+                GetValue uses its valueIfTagNotThere input when the requested tag
+                has no saved value. Compare the tag text first, then confirm that
+                StoreValue runs before Screen2 retrieves it.
+              </p>
+            </details>
+            <details>
+              <summary>Does the analyzer upload my App Inventor project?</summary>
+              <p>
+                No. The analyzer reads the exported .aia locally in your browser.
+                It does not send the project file or its contents to a server.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="final-title">
+        <div class="shell">
+          <div class="final-note">
+            <div>
+              <h2 id="final-title">Compare every literal tag in one view.</h2>
+              <p>
+                Run the prepared sample or choose your own exported .aia. You
+                will get a screen-by-screen tag map and a focused repair step.
+              </p>
+            </div>
+            <a
+              class="primary-cta"
+              href="/analyzer/?source=cross-screen-guide-footer"
+              >Check my literal tags</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-inner">
+        <div class="footer-brand">
+          <strong>TinyDB Inspector</strong>
+          <span>A privacy-first TinyDB toolkit for App Inventor makers.</span>
+        </div>
+        <a
+          class="footer-link"
+          href="mailto:tinproject-ydbq@mail.tin.computer?subject=TinyDB%20Inspector%20support"
+          >Support</a
+        >
+        <a class="footer-credit" href="https://tin.computer">
+          <span class="tin-mark" aria-hidden="true"></span>
+          <span>Growth by Tin</span>
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>
