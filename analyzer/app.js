@@ -57,10 +57,17 @@ function escapeHtml(value) {
 
 function renderAudit(audit, projectName, runId, source) {
   const tagCount = new Set(audit.tagUsages.map(({ tag }) => tag)).size;
+  const namingIssueCount = audit.issues.filter(
+    ({ type }) => type === "tag_mismatch",
+  ).length;
+  const typeConflictCount = audit.issues.filter(
+    ({ type }) => type === "literal_type_conflict",
+  ).length;
   overview.innerHTML = `
     <div><strong>${audit.screens.length}</strong><span>Screens mapped</span></div>
     <div><strong>${tagCount}</strong><span>Tag spellings</span></div>
-    <div><strong>${audit.issues.length}</strong><span>Likely mismatch</span></div>
+    <div><strong>${namingIssueCount}</strong><span>Likely mismatch</span></div>
+    <div><strong>${typeConflictCount}</strong><span>Type warnings</span></div>
     <div><strong>${audit.clears.length}</strong><span>Clear calls</span></div>
   `;
 
@@ -159,7 +166,9 @@ async function runAudit(buffer, projectName, source) {
       source,
       screens_mapped: audit.screens.length,
       tag_spellings: new Set(audit.tagUsages.map(({ tag }) => tag)).size,
-      likely_mismatches: audit.issues.length,
+      likely_mismatches: audit.issues.filter(
+        ({ type }) => type === "tag_mismatch",
+      ).length,
     });
     captureRealProjectCompleted(runId, {
       route: window.location.pathname,

@@ -1,0 +1,7 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="get-score">
+    <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="GetValue" is_generic="false"></mutation>
+    <value name="ARG0"><block type="text"><field name="TEXT">player_score</field></block></value>
+    <value name="ARG1"><block type="text"><field name="TEXT">not set</field></block></value>
+  </block>
+</xml>

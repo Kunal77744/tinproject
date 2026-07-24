@@ -32,6 +32,7 @@
         "featureList": [
           "Map literal TinyDB StoreValue and GetValue tags across app screens",
           "Flag likely punctuation and case naming mismatches",
+          "Compare simple text, number, and boolean literal types",
           "Highlight standard TinyDB ClearTag and ClearAll calls",
           "Produce focused repair steps"
         ]
@@ -47,7 +48,7 @@
             "name": "What does TinyDB Inspector find?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, and highlights standard ClearTag and ClearAll calls. It cannot determine runtime order or whether a clear is a bug, and it does not yet inspect dynamic tag names, types, or default values."
+              "text": "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, compares simple text, number, and boolean value types for exact tags, and highlights standard ClearTag and ClearAll calls. It cannot infer dynamic types, determine runtime order, or decide whether a warning is a bug."
             }
           },
           {
@@ -1080,7 +1081,7 @@
             <div>
               <h3>What does TinyDB Inspector find?</h3>
               <p>
-                It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, and highlights standard ClearTag and ClearAll calls. It cannot determine runtime order or whether a clear is a bug, and it does not yet inspect dynamic tag names, types, or default values.
+                It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, compares simple text, number, and boolean value types for exact tags, and highlights standard ClearTag and ClearAll calls. It cannot infer dynamic types, determine runtime order, or decide whether a warning is a bug.
               </p>
             </div>
           </article>

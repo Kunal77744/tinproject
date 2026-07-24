@@ -24,14 +24,34 @@ function createClearWarning(clear) {
 
 export function createAuditResult(audit) {
   const clearWarnings = audit.clears.map(createClearWarning);
+  const namingIssues = audit.issues.filter(
+    ({ type }) => type === "tag_mismatch",
+  );
+  const typeWarnings = audit.issues.filter(
+    ({ type }) => type === "literal_type_conflict",
+  );
 
   if (audit.issues.length) {
+    let title = "Repair checklist";
+    let intro =
+      "Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.";
+
+    if (namingIssues.length === 0) {
+      title = "Type review";
+      intro =
+        "Review the conflicting static literal types before you test the affected TinyDB flow.";
+    } else if (typeWarnings.length > 0) {
+      intro =
+        "Fix the likely naming mismatch first, then review the static literal types and test the affected screens.";
+    }
+
+    if (clearWarnings.length > 0) {
+      intro = `${intro} Review each clear call before you rerun the audit.`;
+    }
+
     return {
-      title: "Repair checklist",
-      intro:
-        clearWarnings.length > 0
-          ? "Fix the highest-confidence mismatch first, then review each clear call before you rerun the audit and test the affected screens."
-          : "Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.",
+      title,
+      intro,
       items: [...audit.issues, ...clearWarnings],
     };
   }
@@ -57,12 +77,21 @@ export function createAuditResult(audit) {
     });
   }
 
+  if (audit.literalTypeUsages.length > 0) {
+    passedItems.push({
+      status: "passed",
+      title: "Static literal type check complete",
+      detail:
+        "The analyzer compared simple text, number, and boolean StoreValue values and matching GetValue defaults for each exact tag and found no conflict. It does not infer dynamic or runtime types.",
+    });
+  }
+
   return {
     title: clearWarnings.length > 0 ? "Clear-call review" : "Next-step checklist",
     intro:
       clearWarnings.length > 0
         ? "No likely literal naming mismatch was found. Review each clear call before you treat the TinyDB flow as ready."
-        : "The literal naming and static clear-call checks are clear. Use these manual checks before you treat the TinyDB flow as ready.",
+        : "The literal naming, simple static type, and clear-call checks are clear. Use these manual checks before you treat the TinyDB flow as ready.",
     items: [
       ...passedItems,
       ...clearWarnings,
@@ -74,9 +103,9 @@ export function createAuditResult(audit) {
       },
       {
         status: "manual",
-        title: "Check value types and defaults",
+        title: "Check dynamic value types and defaults",
         detail:
-          "Confirm each StoreValue writes the type its matching GetValue expects, and that every fallback default uses that type. Types and defaults are not checked yet.",
+          "Confirm values made with variables, joins, lists, objects, or other expressions use the type each matching GetValue expects. The static check covers only simple text, number, and boolean literals.",
       },
     ],
   };

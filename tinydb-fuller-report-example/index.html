@@ -914,7 +914,8 @@
             <p>
               The current analyzer reads literal TinyDB
               <code>StoreValue</code> and <code>GetValue</code> tags from the
-              selected <code>.aia</code> and highlights standard
+              selected <code>.aia</code>, compares simple text, number, and
+              boolean literal types for exact tags, and highlights standard
               <code>ClearTag</code> and <code>ClearAll</code> calls inside the
               browser. Project contents are not uploaded.
             </p>
@@ -922,7 +923,7 @@
 
           <ul class="scope-list">
             <li>Dynamic tags and computed tag values still need manual review.</li>
-            <li>Value types, default values, runtime order, and whether a clear is a bug are not checked.</li>
+            <li>Dynamic or complex value types and default expressions, runtime order, and whether a warning is a bug are not checked.</li>
             <li>TinyDB namespaces and every Kodular behavior are not verified.</li>
             <li>A clean audit does not prove the corrected app works at runtime.</li>
             <li>The fuller report is prepared manually and does not create an export or audit history.</li>

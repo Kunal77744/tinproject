@@ -1,0 +1,7 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="store-enabled">
+    <mutation component_type="TinyDB" instance_name="Tiny_DB1" method_name="StoreValue" is_generic="false"></mutation>
+    <value name="ARG0"><block type="text"><field name="TEXT">notifications_enabled</field></block></value>
+    <value name="ARG1"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></value>
+  </block>
+</xml>

@@ -23,8 +23,8 @@ test("cross-screen guide states the analyzer boundaries", async () => {
   const html = await readFile(pagePath, "utf8");
 
   assert.match(html, /tags assembled from text blocks/);
-  assert.match(html, /value types/);
-  assert.match(html, /default\s+values/);
+  assert.match(html, /simple text, number, and boolean literal types/);
+  assert.match(html, /complex default expressions/);
   assert.match(html, /ClearTag and ClearAll/);
   assert.match(html, /does not claim full Kodular compatibility/);
   assert.match(

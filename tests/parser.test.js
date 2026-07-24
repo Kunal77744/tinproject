@@ -62,7 +62,7 @@ test("extracts literal TinyDB operations from App Inventor blocks", () => {
       component: "TinyDB",
       tag: "profile_name",
       operation: "store",
-      defaultValue: null,
+      literalType: "text",
       blockId: "store-profile",
     },
   ]);
@@ -73,7 +73,7 @@ test("extracts literal TinyDB operations from App Inventor blocks", () => {
       component: "TinyDB",
       tag: "profile-name",
       operation: "get",
-      defaultValue: "Unknown",
+      literalType: "text",
       blockId: "get-profile",
     },
   ]);
@@ -86,7 +86,7 @@ test("extracts every TinyDB operation in a chained block stack", () => {
       component: "TinyDB",
       tag: "ID",
       operation: "store",
-      defaultValue: null,
+      literalType: "text",
       blockId: "store-id",
     },
     {
@@ -94,7 +94,7 @@ test("extracts every TinyDB operation in a chained block stack", () => {
       component: "TinyDB",
       tag: "PW",
       operation: "store",
-      defaultValue: null,
+      literalType: "text",
       blockId: "store-password",
     },
   ]);
@@ -126,7 +126,7 @@ test("extracts static ClearTag and ClearAll calls without guessing dynamic tags"
       component: "TinyDB1",
       tag: "profile_name",
       operation: "clear_tag",
-      defaultValue: null,
+      literalType: null,
       blockId: "clear-profile",
     },
     {
@@ -134,7 +134,7 @@ test("extracts static ClearTag and ClearAll calls without guessing dynamic tags"
       component: "TinyDB2",
       tag: null,
       operation: "clear_all",
-      defaultValue: null,
+      literalType: null,
       blockId: "clear-everything",
     },
   ]);
@@ -259,6 +259,165 @@ test("finds destructive clears in a standard io.kodular .aia regression fixture"
       },
     ],
   );
+});
+
+test("flags a number versus text conflict in an App Inventor .aia fixture", async () => {
+  const [screen1, screen2, project] = await Promise.all([
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-types/src/appinventor/ai_tin/TypeConflict/Screen1.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-types/src/appinventor/ai_tin/TypeConflict/Screen2.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-types/youngandroidproject/project.properties",
+        import.meta.url,
+      ),
+    ),
+  ]);
+  const fixture = createStoredZip([
+    ["src/appinventor/ai_tin/TypeConflict/Screen1.bky", screen1],
+    ["src/appinventor/ai_tin/TypeConflict/Screen2.bky", screen2],
+    ["youngandroidproject/project.properties", project],
+  ]);
+  const audit = await analyzeAia(fixture);
+  const typeConflict = audit.issues.find(
+    ({ type }) => type === "literal_type_conflict",
+  );
+
+  assert.deepEqual(
+    audit.tagUsages.map(({ screen, operation, literalType }) => ({
+      screen,
+      operation,
+      literalType,
+    })),
+    [
+      { screen: "Screen1", operation: "store", literalType: "number" },
+      { screen: "Screen2", operation: "get", literalType: "text" },
+    ],
+  );
+  assert.deepEqual(typeConflict.types, ["number", "text"]);
+  assert.deepEqual(typeConflict.screens, ["Screen1", "Screen2"]);
+  assert.match(typeConflict.detail, /Screen1 StoreValue value is number/);
+  assert.match(typeConflict.detail, /Screen2 GetValue default is text/);
+  assert.doesNotMatch(typeConflict.detail, /42|not set/);
+  assert.doesNotMatch(JSON.stringify(audit), /42|not set/);
+});
+
+test("flags a boolean versus text conflict in a standard io.kodular .aia fixture", async () => {
+  const [screen1, screen2, project] = await Promise.all([
+    readFile(
+      new URL(
+        "./fixture-source/kodular-types/src/io/kodular/tin/TypeConflict/Screen1.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/kodular-types/src/io/kodular/tin/TypeConflict/Screen2.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/kodular-types/youngandroidproject/project.properties",
+        import.meta.url,
+      ),
+    ),
+  ]);
+  const fixture = createStoredZip([
+    ["src/io/kodular/tin/TypeConflict/Screen1.bky", screen1],
+    ["src/io/kodular/tin/TypeConflict/Screen2.bky", screen2],
+    ["youngandroidproject/project.properties", project],
+  ]);
+  const audit = await analyzeAia(fixture);
+  const typeConflict = audit.issues.find(
+    ({ type }) => type === "literal_type_conflict",
+  );
+
+  assert.deepEqual(typeConflict.types, ["boolean", "text"]);
+  assert.deepEqual(typeConflict.screens, ["Screen1", "Screen2"]);
+  assert.match(typeConflict.detail, /Screen1 StoreValue value is boolean/);
+  assert.match(typeConflict.detail, /Screen2 GetValue default is text/);
+  assert.doesNotMatch(typeConflict.detail, /TRUE|unknown/);
+  assert.doesNotMatch(JSON.stringify(audit), /TRUE|unknown/);
+});
+
+test("does not warn for matching or unsupported dynamic value types", () => {
+  const matchingTypes = `
+    <xml xmlns="https://developers.google.com/blockly/xml">
+      <block type="component_method" id="store-score">
+        <mutation component_type="TinyDB" method_name="StoreValue" />
+        <value name="ARG0"><block type="text"><field name="TEXT">score</field></block></value>
+        <value name="ARG1"><block type="math_number"><field name="NUM">10</field></block></value>
+        <next>
+          <block type="component_method" id="get-score">
+            <mutation component_type="TinyDB" method_name="GetValue" />
+            <value name="ARG0"><block type="text"><field name="TEXT">score</field></block></value>
+            <value name="ARG1"><block type="math_number"><field name="NUM">0</field></block></value>
+            <next>
+              <block type="component_method" id="store-dynamic">
+                <mutation component_type="TinyDB" method_name="StoreValue" />
+                <value name="ARG0"><block type="text"><field name="TEXT">score</field></block></value>
+                <value name="ARG1"><block type="lexical_variable_get"><field name="VAR">currentScore</field></block></value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </xml>`;
+  const audit = buildAudit(extractTinyDbUsage(matchingTypes, "Game"));
+
+  assert.deepEqual(
+    audit.tagUsages.map(({ literalType }) => literalType),
+    ["number", "number", null],
+  );
+  assert.equal(
+    audit.issues.some(({ type }) => type === "literal_type_conflict"),
+    false,
+  );
+});
+
+test("turns a literal type conflict into a cautious visible and copyable review", () => {
+  const numberStore = `
+    <xml xmlns="https://developers.google.com/blockly/xml">
+      <block type="component_method" id="store-score">
+        <mutation component_type="TinyDB" method_name="StoreValue" />
+        <value name="ARG0"><block type="text"><field name="TEXT">score</field></block></value>
+        <value name="ARG1"><block type="math_number"><field name="NUM">99</field></block></value>
+      </block>
+    </xml>`;
+  const textDefault = `
+    <xml xmlns="https://developers.google.com/blockly/xml">
+      <block type="component_method" id="get-score">
+        <mutation component_type="TinyDB" method_name="GetValue" />
+        <value name="ARG0"><block type="text"><field name="TEXT">score</field></block></value>
+        <value name="ARG1"><block type="text"><field name="TEXT">private fallback</field></block></value>
+      </block>
+    </xml>`;
+  const audit = buildAudit([
+    ...extractTinyDbUsage(numberStore, "Game"),
+    ...extractTinyDbUsage(textDefault, "Summary"),
+  ]);
+  const result = createAuditResult(audit);
+  const summary = createRepairSummary(audit);
+
+  assert.equal(result.title, "Type review");
+  assert.match(result.intro, /conflicting static literal types/);
+  assert.equal(result.items[0].status, undefined);
+  assert.match(result.items[0].title, /score/);
+  assert.match(result.items[0].detail, /static review warning, not a proven bug/);
+  assert.match(result.items[0].detail, /dynamic values and runtime conversions are not analyzed/);
+  assert.match(summary, /Game StoreValue value is number/);
+  assert.match(summary, /Summary GetValue default is text/);
+  assert.doesNotMatch(summary, /99|private fallback/);
 });
 
 test("records one completion event for each successful audit run", () => {
@@ -609,7 +768,9 @@ test("turns a clean literal-tag audit into an honest next-step checklist", () =>
   assert.match(result.items[1].detail, /no standard TinyDB ClearTag or ClearAll calls/);
   assert.match(manualItems[0].detail, /variables or text joins/);
   assert.match(manualItems[0].detail, /Dynamic tag values are not analyzed/);
-  assert.match(manualItems[1].title, /value types and defaults/i);
+  assert.match(manualItems[1].title, /dynamic value types and defaults/i);
+  assert.equal(result.items[2].title, "Static literal type check complete");
+  assert.match(result.items[2].detail, /text, number, and boolean/);
 });
 
 test("keeps mismatch repair results unchanged", () => {
@@ -637,7 +798,8 @@ test("copies the same clean-result guidance shown on screen", () => {
   assert.match(summary, /Literal tag naming check complete/);
   assert.match(summary, /Static clear-call check complete/);
   assert.match(summary, /Check tags built at runtime/);
-  assert.match(summary, /Check value types and defaults/);
+  assert.match(summary, /Static literal type check complete/);
+  assert.match(summary, /Check dynamic value types and defaults/);
   assert.match(summary, /does not guarantee the project is bug-free/);
 });
 
@@ -662,15 +824,19 @@ test("shows careful ClearTag and ClearAll warnings in the result and copied summ
   ]);
   const result = createAuditResult(audit);
   const summary = createRepairSummary(audit);
+  const clearTagWarning = result.items.find(
+    ({ title }) => title === "Review ClearTag for “profile_name”",
+  );
+  const clearAllWarning = result.items.find(
+    ({ title }) => title === "Review TinyDB2.ClearAll on Settings",
+  );
 
   assert.equal(result.title, "Clear-call review");
-  assert.match(result.items[1].title, /profile_name/);
-  assert.match(result.items[1].detail, /Settings uses TinyDB1\.ClearTag/);
-  assert.match(result.items[1].detail, /removes that tag's stored value/);
-  assert.match(result.items[1].detail, /cannot determine when the block runs or whether the clear is a bug/);
-  assert.match(result.items[2].title, /TinyDB2\.ClearAll on Settings/);
-  assert.match(result.items[2].detail, /remove every tag/);
-  assert.match(result.items[2].detail, /current store or namespace/);
+  assert.match(clearTagWarning.detail, /Settings uses TinyDB1\.ClearTag/);
+  assert.match(clearTagWarning.detail, /removes that tag's stored value/);
+  assert.match(clearTagWarning.detail, /cannot determine when the block runs or whether the clear is a bug/);
+  assert.match(clearAllWarning.detail, /remove every tag/);
+  assert.match(clearAllWarning.detail, /current store or namespace/);
   assert.match(summary, /Settings uses TinyDB1\.ClearTag/);
   assert.match(summary, /Settings uses TinyDB2\.ClearAll/);
 });

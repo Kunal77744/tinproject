@@ -125,18 +125,44 @@ function componentMethodFragments(xml) {
   return fragments;
 }
 
-function literalValue(fragment, inputName) {
+function decodeXmlText(value) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+function literalInput(fragment, inputName) {
   const valuePattern = new RegExp(
-    `<value\\b[^>]*name=["']${inputName}["'][^>]*>([\\s\\S]*?)<\\/value>`,
+    `<value\\b[^>]*name=["']${inputName}["'][^>]*>\\s*(<block\\b[^>]*>)`,
     "i",
   );
-  const valueFragment = fragment.match(valuePattern)?.[1];
-  if (!valueFragment) return null;
+  const match = valuePattern.exec(fragment);
+  if (!match) return null;
 
-  const field = valueFragment.match(
-    /<field\b[^>]*name=["']TEXT["'][^>]*>([\s\S]*?)<\/field>/i,
+  const blockType = attribute(match[1], "type");
+  const literalTypes = {
+    text: { field: "TEXT", type: "text" },
+    math_number: { field: "NUM", type: "number" },
+    logic_boolean: { field: "BOOL", type: "boolean" },
+  };
+  const literal = literalTypes[blockType];
+  if (!literal) return null;
+
+  const fieldPattern = new RegExp(
+    `^\\s*<field\\b[^>]*name=["']${literal.field}["'][^>]*>([\\s\\S]*?)<\\/field>`,
+    "i",
   );
-  return field ? field[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim() : null;
+  const afterOpeningBlock = fragment.slice(match.index + match[0].length);
+  const fieldValue = afterOpeningBlock.match(fieldPattern)?.[1];
+  if (fieldValue === undefined) return null;
+
+  return {
+    type: literal.type,
+    value: decodeXmlText(fieldValue).trim(),
+  };
 }
 
 function screenFromPath(path) {
@@ -159,8 +185,14 @@ export function extractTinyDbUsage(xml, screen) {
       continue;
     }
 
-    const tag = methodName === "ClearAll" ? null : literalValue(fragment, "ARG0");
+    const tagInput =
+      methodName === "ClearAll" ? null : literalInput(fragment, "ARG0");
+    const tag =
+      tagInput?.type === "text" && tagInput.value ? tagInput.value : null;
     if (methodName !== "ClearAll" && !tag) continue;
+    const valueInput = ["StoreValue", "GetValue"].includes(methodName)
+      ? literalInput(fragment, "ARG1")
+      : null;
 
     const operations = {
       StoreValue: "store",
@@ -174,7 +206,7 @@ export function extractTinyDbUsage(xml, screen) {
       component: attribute(mutationTag, "instance_name") || "TinyDB",
       tag,
       operation: operations[methodName],
-      defaultValue: methodName === "GetValue" ? literalValue(fragment, "ARG1") : null,
+      literalType: valueInput?.type ?? null,
       blockId: attribute(openingTag, "id"),
     });
   }
@@ -195,6 +227,7 @@ export function buildAudit(usages) {
   const clears = usages.filter(({ operation }) =>
     ["clear_tag", "clear_all"].includes(operation),
   );
+  const literalTypeUsages = tagUsages.filter(({ literalType }) => literalType);
   const issues = [];
 
   for (const usage of usages) {
@@ -226,6 +259,39 @@ export function buildAudit(usages) {
     }
   }
 
+  for (const tag of tagNames) {
+    const exactTagUsages = literalTypeUsages.filter(
+      (usage) => usage.tag === tag,
+    );
+    const types = [...new Set(exactTagUsages.map(({ literalType }) => literalType))];
+    if (types.length < 2) continue;
+
+    const evidence = [
+      ...new Set(
+        exactTagUsages.map(({ screen, operation, literalType }) => {
+          const inputLabel =
+            operation === "store" ? "StoreValue value" : "GetValue default";
+          return `${screen} ${inputLabel} is ${literalType}`;
+        }),
+      ),
+    ];
+    const screensWithConflict = [
+      ...new Set(exactTagUsages.map(({ screen }) => screen)),
+    ];
+
+    issues.push({
+      type: "literal_type_conflict",
+      severity: "review",
+      tag,
+      types,
+      screens: screensWithConflict,
+      title: `Review value types for “${tag}”`,
+      detail: `The exact tag “${tag}” has conflicting simple literal types: ${evidence.join(
+        "; ",
+      )}. Confirm the stored value and fallback default are meant to use the same type. This is a static review warning, not a proven bug; dynamic values and runtime conversions are not analyzed.`,
+    });
+  }
+
   return {
     screens: [...screens.entries()].map(([name, screenUsages]) => ({
       name,
@@ -234,6 +300,7 @@ export function buildAudit(usages) {
     usages,
     tagUsages,
     clears,
+    literalTypeUsages,
     issues,
   };
 }
