@@ -58,10 +58,15 @@
       .file-label input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
       .file-choice { display: grid; gap: 5px; }
       .file-note { max-width: 48ch; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
-      .export-guide { scroll-margin-top: 24px; max-width: 56ch; margin-top: 24px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-      .export-guide h2 { margin-bottom: 10px; font-family: inherit; font-size: 0.9rem; font-weight: 800; letter-spacing: 0; }
+      .export-guide { scroll-margin-top: 24px; max-width: 64ch; margin-top: 24px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+      .export-guide h2 { margin-bottom: 14px; font-family: inherit; font-size: 0.9rem; font-weight: 800; letter-spacing: 0; }
+      .export-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .export-path { min-width: 0; padding-right: 18px; }
+      .export-path + .export-path { padding-left: 18px; padding-right: 0; border-left: 1px solid var(--line); }
+      .export-path h3 { margin-bottom: 8px; color: var(--ink); font-size: 0.78rem; font-weight: 800; }
       .export-steps { display: grid; gap: 6px; margin: 0; padding-left: 1.15rem; color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
       .export-steps strong { color: var(--ink); }
+      .export-scope { margin: 10px 0 0; color: var(--muted); font-size: 0.72rem; line-height: 1.5; }
       .export-privacy { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; color: var(--accent-strong); font-size: 0.76rem; font-weight: 720; line-height: 1.45; }
       .export-privacy::before { content: ""; flex: 0 0 auto; width: 7px; height: 7px; margin-top: 0.34rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
       .status { min-height: 24px; margin: 20px 0 0; color: var(--muted); font-size: 0.84rem; }
@@ -151,6 +156,9 @@
         .hero { padding: 56px 0 68px; }
         h1 { font-size: clamp(3.15rem, 17vw, 5rem); }
         .action-group { align-items: flex-start; flex-direction: column; gap: 8px; }
+        .export-paths { grid-template-columns: 1fr; gap: 16px; }
+        .export-path { padding-right: 0; }
+        .export-path + .export-path { padding: 16px 0 0; border-top: 1px solid var(--line); border-left: 0; }
         .workbench { min-height: 420px; padding: 18px; border-radius: 16px; }
         .preview-screen { width: 88%; padding: 18px; }
         .mismatch-flag { right: -8px; }
@@ -180,16 +188,30 @@
             <button class="primary-action" id="sample-button" type="button">Inspect sample project</button>
             <div class="file-choice">
               <label class="file-label">Choose your own .aia<input id="project-file" type="file" accept=".aia,application/zip"></label>
-              <span class="file-note">Choose an exported .aia from App Inventor. It is processed in this browser and never uploaded.</span>
+              <span class="file-note">Choose an exported .aia from App Inventor or Kodular. It is processed in this browser and never uploaded.</span>
             </div>
           </div>
           <aside class="export-guide" id="export-aia" aria-labelledby="export-title">
             <h2 id="export-title">Need the .aia file first?</h2>
-            <ol class="export-steps">
-              <li>Open your project in <strong>MIT App Inventor</strong>.</li>
-              <li>Choose <strong>Projects → Export selected project (.aia) to my computer</strong>.</li>
-              <li>Return here and choose the downloaded <strong>.aia</strong> file above.</li>
-            </ol>
+            <div class="export-paths">
+              <section class="export-path" aria-labelledby="app-inventor-export-title">
+                <h3 id="app-inventor-export-title">MIT App Inventor</h3>
+                <ol class="export-steps">
+                  <li>Open your project.</li>
+                  <li>Choose <strong>Projects → Export selected project (.aia) to my computer</strong>.</li>
+                  <li>Return here and choose the downloaded <strong>.aia</strong> above.</li>
+                </ol>
+              </section>
+              <section class="export-path" aria-labelledby="kodular-export-title">
+                <h3 id="kodular-export-title">Kodular Creator</h3>
+                <ol class="export-steps">
+                  <li>Open your project.</li>
+                  <li>Choose <strong>Project → Export selected project (.aia) to my computer</strong>.</li>
+                  <li>Return here and choose the downloaded <strong>.aia</strong> above.</li>
+                </ol>
+                <p class="export-scope">Current Kodular support covers literal TinyDB tags in the tested standard .aia structure, not full Kodular behavior.</p>
+              </section>
+            </div>
             <p class="export-privacy">The file stays in this browser. TinyDB Inspector never uploads it.</p>
           </aside>
           <p class="status" id="status" role="status" aria-live="polite">Start with the prepared two-screen project.</p>

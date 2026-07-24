@@ -56,6 +56,14 @@ test("search-page audit prompts land on the analyzer export steps", async () => 
   );
   assert.match(
     analyzer,
+    /Kodular Creator[\s\S]*?Project → Export selected project \(\.aia\) to my computer/,
+  );
+  assert.match(
+    analyzer,
+    /Current Kodular support covers literal TinyDB tags in the tested standard \.aia structure, not full Kodular behavior\./,
+  );
+  assert.match(
+    analyzer,
     /The file stays in this browser\. TinyDB Inspector never uploads it\./,
   );
 
