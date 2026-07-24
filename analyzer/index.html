@@ -101,6 +101,9 @@
       .repair { margin-top: 64px; display: grid; grid-template-columns: minmax(240px, 0.62fr) minmax(0, 1.38fr); gap: 64px; }
       .repair h2 { margin-bottom: 16px; font-size: 2.3rem; line-height: 1.05; }
       .repair > div > p { color: var(--muted); line-height: 1.6; }
+      .guide-link { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; color: var(--accent-strong); font-size: 0.86rem; font-weight: 760; line-height: 1.45; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+      .guide-link span { transition: transform 160ms ease-out; }
+      .guide-link:hover span { transform: translateX(2px); }
       .checklist { margin: 0; padding: 0; list-style: none; }
       .checklist li { display: grid; grid-template-columns: 48px 1fr; gap: 18px; padding: 24px 0; border-top: 1px solid var(--line); }
       .checklist li:last-child { border-bottom: 1px solid var(--line); }
@@ -110,7 +113,7 @@
       .result-actions { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr); gap: 32px; align-items: start; margin-top: 40px; padding: 28px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-strong); }
       .copy-action { min-height: 48px; padding: 0 18px; border: 1px solid var(--accent); border-radius: 9px; color: var(--accent-strong); background: var(--surface); font-weight: 760; transition: border-color 160ms ease-out, background-color 160ms ease-out; }
       .copy-action:hover { border-color: var(--accent-strong); background: var(--accent-soft); }
-      .copy-action:focus-visible, .report-link:focus-visible { outline: 3px solid rgb(22 114 74 / 32%); outline-offset: 4px; }
+      .copy-action:focus-visible, .guide-link:focus-visible, .report-link:focus-visible { outline: 3px solid rgb(22 114 74 / 32%); outline-offset: 4px; }
       .copy-status { min-height: 20px; margin: 9px 0 0; color: var(--muted); font-size: 0.76rem; line-height: 1.4; }
       .report-prompt { padding-top: 4px; }
       .report-prompt p { max-width: 54ch; margin-bottom: 12px; color: var(--muted); font-size: 0.86rem; line-height: 1.55; }
@@ -193,7 +196,14 @@
           <div class="overview" id="overview"></div>
           <div class="screen-list" id="screen-list"></div>
           <div class="repair">
-            <div><h2>Repair checklist</h2><p>Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.</p></div>
+            <div>
+              <h2>Repair checklist</h2>
+              <p>Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.</p>
+              <a class="guide-link" href="/app-inventor-tinydb-not-working/"
+                >Read the App Inventor TinyDB debugging guide
+                <span aria-hidden="true">→</span></a
+              >
+            </div>
             <div>
               <ol class="checklist" id="checklist"></ol>
               <div class="result-actions" aria-label="Use your repair result">
