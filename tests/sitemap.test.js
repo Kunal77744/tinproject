@@ -40,5 +40,6 @@ test("sitemap uses only canonical production URLs", async () => {
     `${productionOrigin}/tinydb-ui/`,
     `${productionOrigin}/app-inventor-tinydb-not-working/`,
     `${productionOrigin}/app-inventor-tinydb-multiple-screens/`,
+    `${productionOrigin}/tinydb-fuller-report-example/`,
   ]);
 });
