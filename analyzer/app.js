@@ -8,6 +8,7 @@ import {
 import {
   createAuditCompletionTracker,
   createAuditFailureTracker,
+  createSearchAuditStartTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
   createRealProjectCompletionTracker,
@@ -27,10 +28,13 @@ const sampleNextStep = document.querySelector("#sample-next-step");
 const auditOwnButton = document.querySelector("#audit-own-button");
 let auditRun = 0;
 let activeResult = null;
+const searchSource = new URLSearchParams(window.location.search).get("source");
 const captureAuditEvent = (event, properties) => {
   window.posthog?.capture?.(event, properties);
 };
 const captureAuditStarted = createAuditStartTracker(captureAuditEvent);
+const captureSearchAuditStarted =
+  createSearchAuditStartTracker(captureAuditEvent);
 const captureAuditCompleted = createAuditCompletionTracker(captureAuditEvent);
 const captureAuditFailed = createAuditFailureTracker(captureAuditEvent);
 const captureRealProjectCompleted = createRealProjectCompletionTracker(
@@ -111,6 +115,10 @@ async function runAudit(buffer, projectName, source) {
   captureAuditStarted(runId, {
     route: window.location.pathname,
     source,
+  });
+  captureSearchAuditStarted(runId, {
+    source: searchSource,
+    audit_route: source,
   });
   status.textContent = `Inspecting ${projectName} locally…`;
   results.hidden = true;

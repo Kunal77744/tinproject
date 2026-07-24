@@ -29,7 +29,7 @@ test("all TinyDB search pages lead directly to the analyzer", async () => {
 
   assert.match(
     tinydbUi,
-    /href="\/analyzer\/"[\s\S]*?Run private audit/,
+    /href="\/analyzer\/\?source=tinydb-ui"[\s\S]*?Run private audit/,
   );
   assert.match(
     debuggingGuide,

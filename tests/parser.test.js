@@ -7,6 +7,7 @@ import { auditErrorCode, guidanceForAuditError } from "../analyzer/error-guidanc
 import {
   createAuditCompletionTracker,
   createAuditFailureTracker,
+  createSearchAuditStartTracker,
   createAuditStartTracker,
   createPaidReportInterestTracker,
   createRealProjectCompletionTracker,
@@ -262,6 +263,78 @@ test("records one privacy-safe start event for each audit run", () => {
       properties: { route: "/analyzer/", source: "local_file" },
     },
   ]);
+});
+
+test("records one search-referred start for sample and local-file audit runs", () => {
+  const events = [];
+  const trackSearchStart = createSearchAuditStartTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackSearchStart(1, {
+      source: "tinydb-ui",
+      audit_route: "sample",
+      filename: "must not be captured.aia",
+    }),
+    true,
+  );
+  assert.equal(
+    trackSearchStart(1, {
+      source: "tinydb-ui",
+      audit_route: "sample",
+    }),
+    false,
+  );
+  assert.equal(
+    trackSearchStart(2, {
+      source: "cross-screen-guide-footer",
+      audit_route: "local_file",
+      tags: ["must_not_be_captured"],
+    }),
+    true,
+  );
+
+  assert.deepEqual(events, [
+    {
+      event: "tinydb_search_audit_started",
+      properties: { source: "tinydb-ui", audit_route: "sample" },
+    },
+    {
+      event: "tinydb_search_audit_started",
+      properties: {
+        source: "cross-screen-guide",
+        audit_route: "local_file",
+      },
+    },
+  ]);
+});
+
+test("does not record search starts for direct or unapproved analyzer visits", () => {
+  const events = [];
+  const trackSearchStart = createSearchAuditStartTracker((event, properties) => {
+    events.push({ event, properties });
+  });
+
+  assert.equal(
+    trackSearchStart(1, { source: null, audit_route: "sample" }),
+    false,
+  );
+  assert.equal(
+    trackSearchStart(2, {
+      source: "https://private.example/customer",
+      audit_route: "local_file",
+    }),
+    false,
+  );
+  assert.equal(
+    trackSearchStart(3, {
+      source: "debugging-guide",
+      audit_route: "unsupported_route",
+    }),
+    false,
+  );
+  assert.deepEqual(events, []);
 });
 
 test("records one privacy-safe failure event for sample and local-file runs", () => {

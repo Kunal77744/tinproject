@@ -1,5 +1,19 @@
 import { auditErrorCode } from "./error-guidance.js";
 
+const SEARCH_SOURCE_ALIASES = new Map([
+  ["tinydb-ui", "tinydb-ui"],
+  ["debugging-guide", "debugging-guide"],
+  ["repair-order", "debugging-guide"],
+  ["debugging-guide-footer", "debugging-guide"],
+  ["cross-screen-guide-header", "cross-screen-guide"],
+  ["cross-screen-guide", "cross-screen-guide"],
+  ["cross-screen-guide-footer", "cross-screen-guide"],
+]);
+
+export function allowlistedSearchSource(source) {
+  return SEARCH_SOURCE_ALIASES.get(source) ?? null;
+}
+
 export function createAuditStartTracker(capture) {
   const startedRuns = new Set();
 
@@ -11,6 +25,33 @@ export function createAuditStartTracker(capture) {
       capture("tinydb_audit_started", {
         route: properties.route,
         source: properties.source,
+      });
+    }
+
+    return true;
+  };
+}
+
+export function createSearchAuditStartTracker(capture) {
+  const startedRuns = new Set();
+
+  return (runId, properties) => {
+    const source = allowlistedSearchSource(properties.source);
+    const auditRoute = properties.audit_route;
+
+    if (
+      source === null ||
+      !["sample", "local_file"].includes(auditRoute) ||
+      startedRuns.has(runId)
+    ) {
+      return false;
+    }
+    startedRuns.add(runId);
+
+    if (typeof capture === "function") {
+      capture("tinydb_search_audit_started", {
+        source,
+        audit_route: auditRoute,
       });
     }
 
