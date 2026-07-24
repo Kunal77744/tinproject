@@ -4,28 +4,68 @@ export function shouldOfferLocalAudit(source) {
   return source === "sample";
 }
 
+function createClearWarning(clear) {
+  const component = clear.component || "TinyDB";
+
+  if (clear.operation === "clear_all") {
+    return {
+      status: "warning",
+      title: `Review ${component}.ClearAll on ${clear.screen}`,
+      detail: `${clear.screen} uses ${component}.ClearAll. When this block runs, it can remove every tag in that TinyDB component's current store or namespace. Confirm the event and timing are intentional. This audit cannot determine when the block runs or whether the clear is a bug.`,
+    };
+  }
+
+  return {
+    status: "warning",
+    title: `Review ClearTag for “${clear.tag}”`,
+    detail: `${clear.screen} uses ${component}.ClearTag for the literal tag “${clear.tag}”. When this block runs, it removes that tag's stored value. Confirm the event and timing are intentional. This audit cannot determine when the block runs or whether the clear is a bug.`,
+  };
+}
+
 export function createAuditResult(audit) {
+  const clearWarnings = audit.clears.map(createClearWarning);
+
   if (audit.issues.length) {
     return {
       title: "Repair checklist",
       intro:
-        "Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.",
-      items: audit.issues,
+        clearWarnings.length > 0
+          ? "Fix the highest-confidence mismatch first, then review each clear call before you rerun the audit and test the affected screens."
+          : "Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.",
+      items: [...audit.issues, ...clearWarnings],
     };
   }
 
-  const screenLabel = audit.screens.length === 1 ? "screen" : "screens";
+  const tagScreens = new Set(audit.tagUsages.map(({ screen }) => screen));
+  const screenLabel = tagScreens.size === 1 ? "screen" : "screens";
+  const passedItems = [];
+
+  if (audit.tagUsages.length > 0) {
+    passedItems.push({
+      status: "passed",
+      title: "Literal tag naming check complete",
+      detail: `The analyzer compared literal TinyDB StoreValue and GetValue tags across ${tagScreens.size} ${screenLabel} and found no likely case or punctuation mismatch. This check does not guarantee the project is bug-free.`,
+    });
+  }
+
+  if (clearWarnings.length === 0) {
+    passedItems.push({
+      status: "passed",
+      title: "Static clear-call check complete",
+      detail:
+        "The analyzer found no standard TinyDB ClearTag or ClearAll calls in the mapped blocks. It does not analyze runtime ordering or dynamic and generic component calls.",
+    });
+  }
 
   return {
-    title: "Next-step checklist",
+    title: clearWarnings.length > 0 ? "Clear-call review" : "Next-step checklist",
     intro:
-      "The literal naming check is clear. Use these manual checks before you treat the TinyDB flow as ready.",
+      clearWarnings.length > 0
+        ? "No likely literal naming mismatch was found. Review each clear call before you treat the TinyDB flow as ready."
+        : "The literal naming and static clear-call checks are clear. Use these manual checks before you treat the TinyDB flow as ready.",
     items: [
-      {
-        status: "passed",
-        title: "Literal tag naming check complete",
-        detail: `The analyzer compared literal TinyDB StoreValue and GetValue tags across ${audit.screens.length} ${screenLabel} and found no likely case or punctuation mismatch. This check does not guarantee the project is bug-free.`,
-      },
+      ...passedItems,
+      ...clearWarnings,
       {
         status: "manual",
         title: "Check tags built at runtime",
@@ -37,12 +77,6 @@ export function createAuditResult(audit) {
         title: "Check value types and defaults",
         detail:
           "Confirm each StoreValue writes the type its matching GetValue expects, and that every fallback default uses that type. Types and defaults are not checked yet.",
-      },
-      {
-        status: "manual",
-        title: "Check destructive clears",
-        detail:
-          "Find ClearTag and ClearAll blocks and confirm they cannot erase shared data unexpectedly. Destructive clears are not checked yet.",
       },
     ],
   };

@@ -13,7 +13,7 @@ const pages = [
     path: new URL("../analyzer/index.html", import.meta.url),
     title: "Private App Inventor TinyDB Analyzer | TinyDB Inspector",
     description:
-      "Audit a local .aia file in your browser. Map literal TinyDB tags, catch likely cross-screen naming mismatches, and get a focused repair step without uploading.",
+      "Audit a local .aia file in your browser. Map literal TinyDB tags, catch likely naming mismatches, and review static ClearTag or ClearAll calls without uploading.",
   },
   {
     path: new URL("../tinydb-ui/index.html", import.meta.url),

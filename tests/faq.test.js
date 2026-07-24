@@ -6,7 +6,7 @@ const faqItems = [
   {
     question: "What does TinyDB Inspector find?",
     answer:
-      "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely case or punctuation naming mismatches, and gives you a focused rename-and-retest step. It does not yet inspect dynamic tag names, types, default values, or destructive clears.",
+      "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, and highlights standard ClearTag and ClearAll calls. It cannot determine runtime order or whether a clear is a bug, and it does not yet inspect dynamic tag names, types, or default values.",
   },
   {
     question: "Does it upload my .aia file?",

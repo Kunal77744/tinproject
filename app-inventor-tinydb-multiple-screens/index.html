@@ -1170,10 +1170,11 @@
           <div class="limits">
             <article class="limit-card">
               <p class="limit-label">Covered now</p>
-              <h3>Literal StoreValue and GetValue tags</h3>
+              <h3>Literal tags and static clears</h3>
               <p>
                 See which screens use each literal tag, catch likely case or
-                punctuation mismatches, and get a rename-and-retest repair step.
+                punctuation mismatches, get a rename-and-retest repair step, and
+                review standard ClearTag and ClearAll calls.
               </p>
             </article>
             <article class="limit-card">
@@ -1181,8 +1182,9 @@
               <h3>Behavior around the tag</h3>
               <p>
                 Inspect tags assembled from text blocks, value types, default
-                values, ClearTag or ClearAll calls, and the order your events
-                run. These checks are outside the current audit.
+                values, dynamic or generic component calls, and the order your
+                events run. The audit cannot determine when a clear runs or
+                whether it is a bug.
               </p>
               <a class="related-link" href="/app-inventor-tinydb-not-working/"
                 >Use the broader TinyDB debugging guide

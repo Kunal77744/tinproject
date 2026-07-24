@@ -1148,11 +1148,12 @@
           <div class="boundary">
             <article>
               <span class="boundary-label">Covered now</span>
-              <h3>Literal tag paths</h3>
+              <h3>Literal tag paths and static clears</h3>
               <p>
                 The analyzer maps literal TinyDB StoreValue and GetValue tags by
                 screen, flags likely case or punctuation variants, and gives a
-                rename-and-retest repair step.
+                rename-and-retest repair step. It also highlights standard
+                ClearTag and ClearAll calls for review.
               </p>
             </article>
             <article>
@@ -1160,8 +1161,9 @@
               <h3>Behavior around the tag</h3>
               <p>
                 Inspect tags assembled from text blocks, default values, value
-                types, ClearTag or ClearAll calls, and the order your event blocks
-                run. These checks are not part of the current audit.
+                types, dynamic or generic component calls, and the order your
+                event blocks run. The audit cannot determine when a clear runs
+                or whether it is a bug.
               </p>
             </article>
           </div>
