@@ -108,6 +108,7 @@
       .checklist li { display: grid; grid-template-columns: 48px 1fr; gap: 18px; padding: 24px 0; border-top: 1px solid var(--line); }
       .checklist li:last-child { border-bottom: 1px solid var(--line); }
       .check-number { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: #713716; background: var(--warning-soft); font-family: ui-monospace, monospace; font-size: 0.75rem; font-weight: 800; }
+      .check-number-passed { color: var(--accent-strong); background: var(--accent-soft); font-family: inherit; font-size: 1rem; }
       .checklist h3 { margin-bottom: 8px; font-size: 1.04rem; }
       .checklist p { max-width: 65ch; margin-bottom: 0; color: var(--muted); line-height: 1.55; }
       .result-actions { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr); gap: 32px; align-items: start; margin-top: 40px; padding: 28px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface-strong); }
@@ -199,8 +200,8 @@
           <div class="screen-list" id="screen-list"></div>
           <div class="repair">
             <div>
-              <h2>Repair checklist</h2>
-              <p>Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.</p>
+              <h2 id="repair-title">Repair checklist</h2>
+              <p id="repair-intro">Fix the highest-confidence mismatch first, then rerun the audit and test the affected screens.</p>
               <a class="guide-link" href="/app-inventor-tinydb-not-working/"
                 >Read the App Inventor TinyDB debugging guide
                 <span aria-hidden="true">→</span></a

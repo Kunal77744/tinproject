@@ -1,6 +1,7 @@
 import { analyzeAia } from "./parser.js";
 import { guidanceForAuditError } from "./error-guidance.js";
 import {
+  createAuditResult,
   createFullReportMailto,
   createRepairSummary,
   shouldOfferLocalAudit,
@@ -21,6 +22,8 @@ const results = document.querySelector("#results");
 const overview = document.querySelector("#overview");
 const screenList = document.querySelector("#screen-list");
 const checklist = document.querySelector("#checklist");
+const repairTitle = document.querySelector("#repair-title");
+const repairIntro = document.querySelector("#repair-intro");
 const copySummaryButton = document.querySelector("#copy-summary");
 const copyStatus = document.querySelector("#copy-status");
 const fullReportLink = document.querySelector("#full-report-link");
@@ -85,18 +88,26 @@ function renderAudit(audit, projectName, runId, source) {
     )
     .join("");
 
-  checklist.innerHTML = audit.issues.length
-    ? audit.issues
-        .map(
-          (issue, index) => `
-            <li>
-              <span class="check-number">${String(index + 1).padStart(2, "0")}</span>
-              <div><h3>${escapeHtml(issue.title)}</h3><p>${escapeHtml(issue.detail)}</p></div>
-            </li>
-          `,
-        )
-        .join("")
-    : '<li class="clear-result"><span aria-hidden="true">✓</span><div><h3>No likely cross-screen mismatch found</h3><p>Review dynamic tag values manually before shipping.</p></div></li>';
+  const auditResult = createAuditResult(audit);
+  const includesPassedCheck = auditResult.items.some(
+    ({ status: itemStatus }) => itemStatus === "passed",
+  );
+  repairTitle.textContent = auditResult.title;
+  repairIntro.textContent = auditResult.intro;
+  checklist.innerHTML = auditResult.items
+    .map((item, index) => {
+      const isPassed = item.status === "passed";
+      const itemNumber = includesPassedCheck ? index : index + 1;
+      const marker = isPassed ? "✓" : String(itemNumber).padStart(2, "0");
+
+      return `
+        <li>
+          <span class="check-number${isPassed ? " check-number-passed" : ""}"${isPassed ? ' aria-label="Passed"' : ""}>${marker}</span>
+          <div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.detail)}</p></div>
+        </li>
+      `;
+    })
+    .join("");
 
   status.textContent = `Audit complete for ${projectName}. Nothing left your browser.`;
   activeResult = {
