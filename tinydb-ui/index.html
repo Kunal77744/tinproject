@@ -36,6 +36,38 @@
         ]
       }
     </script>
+    <script id="faq-structured-data" type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What does TinyDB Inspector find?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely case or punctuation naming mismatches, and gives you a focused rename-and-retest step. It does not yet inspect dynamic tag names, types, default values, or destructive clears."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it upload my .aia file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The analyzer reads the exported .aia file locally in your browser. Your project file is not uploaded."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does the fuller repair report add?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The optional fuller report expands the audit into a manually prepared issue summary, prioritized repair order, and retest checklist. It is an early paid offer, not a live checkout; you can ask about it from a completed audit."
+            }
+          }
+        ]
+      }
+    </script>
     <script defer src="/analytics.js"></script>
     <style>
       :root {
@@ -595,6 +627,43 @@
         line-height: 1.55;
       }
 
+      .faq-list {
+        border-top: 1px solid var(--line);
+      }
+
+      .faq-item {
+        display: grid;
+        grid-template-columns: minmax(0, 0.4fr) minmax(320px, 1.6fr);
+        gap: 70px;
+        padding: 32px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .faq-number {
+        margin: 0;
+        color: var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.72rem;
+      }
+
+      .faq-item h3 {
+        margin-bottom: 12px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.45rem, 2.3vw, 2rem);
+        font-weight: 500;
+        line-height: 1.15;
+        text-wrap: balance;
+      }
+
+      .faq-item div > p {
+        max-width: 70ch;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.65;
+        text-wrap: pretty;
+      }
+
       .final-cta {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
@@ -698,6 +767,11 @@
 
         .feature-number {
           margin-bottom: 34px;
+        }
+
+        .faq-item {
+          grid-template-columns: minmax(0, 0.35fr) minmax(320px, 1.65fr);
+          gap: 40px;
         }
       }
 
@@ -808,6 +882,12 @@
           min-height: 220px;
         }
 
+        .faq-item {
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 26px 0;
+        }
+
         .final-cta {
           grid-template-columns: 1fr;
           margin: 64px 0;
@@ -847,6 +927,7 @@
         <a class="nav-link" href="/tinydb-ui/" aria-current="page">TinyDB UI</a>
         <a class="nav-link" href="#what-it-finds">What it finds</a>
         <a class="nav-link" href="#how-it-works">How it works</a>
+        <a class="nav-link" href="#questions">Questions</a>
       </nav>
       <a class="header-cta" href="/analyzer/">Run private audit</a>
     </header>
@@ -979,6 +1060,45 @@
             <div>
               <h3>Work through the repair list</h3>
               <p>Review the tag map and address the most likely data bugs first.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="questions" class="section shell" aria-labelledby="questions-title">
+        <div class="section-heading">
+          <h2 id="questions-title">Know what happens before you choose a file.</h2>
+          <p>
+            Three direct answers about the working analyzer, your project file,
+            and the optional fuller report.
+          </p>
+        </div>
+        <div class="faq-list">
+          <article class="faq-item">
+            <p class="faq-number">01 / SCOPE</p>
+            <div>
+              <h3>What does TinyDB Inspector find?</h3>
+              <p>
+                It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely case or punctuation naming mismatches, and gives you a focused rename-and-retest step. It does not yet inspect dynamic tag names, types, default values, or destructive clears.
+              </p>
+            </div>
+          </article>
+          <article class="faq-item">
+            <p class="faq-number">02 / PRIVACY</p>
+            <div>
+              <h3>Does it upload my .aia file?</h3>
+              <p>
+                No. The analyzer reads the exported .aia file locally in your browser. Your project file is not uploaded.
+              </p>
+            </div>
+          </article>
+          <article class="faq-item">
+            <p class="faq-number">03 / REPORT</p>
+            <div>
+              <h3>What does the fuller repair report add?</h3>
+              <p>
+                The optional fuller report expands the audit into a manually prepared issue summary, prioritized repair order, and retest checklist. It is an early paid offer, not a live checkout; you can ask about it from a completed audit.
+              </p>
             </div>
           </article>
         </div>
