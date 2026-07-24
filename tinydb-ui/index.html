@@ -32,6 +32,7 @@
         "featureList": [
           "Map literal TinyDB StoreValue and GetValue tags across app screens",
           "Flag likely punctuation and case naming mismatches",
+          "Highlight standard TinyDB ClearTag and ClearAll calls",
           "Produce focused repair steps"
         ]
       }
@@ -46,7 +47,7 @@
             "name": "What does TinyDB Inspector find?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely case or punctuation naming mismatches, and gives you a focused rename-and-retest step. It does not yet inspect dynamic tag names, types, default values, or destructive clears."
+              "text": "It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, and highlights standard ClearTag and ClearAll calls. It cannot determine runtime order or whether a clear is a bug, and it does not yet inspect dynamic tag names, types, or default values."
             }
           },
           {
@@ -1079,7 +1080,7 @@
             <div>
               <h3>What does TinyDB Inspector find?</h3>
               <p>
-                It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely case or punctuation naming mismatches, and gives you a focused rename-and-retest step. It does not yet inspect dynamic tag names, types, default values, or destructive clears.
+                It maps literal TinyDB StoreValue and GetValue tags across project screens, flags likely naming mismatches, and highlights standard ClearTag and ClearAll calls. It cannot determine runtime order or whether a clear is a bug, and it does not yet inspect dynamic tag names, types, or default values.
               </p>
             </div>
           </article>

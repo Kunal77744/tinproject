@@ -152,17 +152,28 @@ export function extractTinyDbUsage(xml, screen) {
     const componentType = attribute(mutationTag, "component_type");
     const methodName = attribute(mutationTag, "method_name");
 
-    if (componentType !== "TinyDB" || !["StoreValue", "GetValue"].includes(methodName)) {
+    if (
+      componentType !== "TinyDB" ||
+      !["StoreValue", "GetValue", "ClearTag", "ClearAll"].includes(methodName)
+    ) {
       continue;
     }
 
-    const tag = literalValue(fragment, "ARG0");
-    if (!tag) continue;
+    const tag = methodName === "ClearAll" ? null : literalValue(fragment, "ARG0");
+    if (methodName !== "ClearAll" && !tag) continue;
+
+    const operations = {
+      StoreValue: "store",
+      GetValue: "get",
+      ClearTag: "clear_tag",
+      ClearAll: "clear_all",
+    };
 
     usages.push({
       screen,
+      component: attribute(mutationTag, "instance_name") || "TinyDB",
       tag,
-      operation: methodName === "StoreValue" ? "store" : "get",
+      operation: operations[methodName],
       defaultValue: methodName === "GetValue" ? literalValue(fragment, "ARG1") : null,
       blockId: attribute(openingTag, "id"),
     });
@@ -177,7 +188,13 @@ function normalizedTag(tag) {
 
 export function buildAudit(usages) {
   const screens = new Map();
-  const tagNames = [...new Set(usages.map(({ tag }) => tag))];
+  const tagUsages = usages.filter(({ operation }) =>
+    ["store", "get"].includes(operation),
+  );
+  const tagNames = [...new Set(tagUsages.map(({ tag }) => tag))];
+  const clears = usages.filter(({ operation }) =>
+    ["clear_tag", "clear_all"].includes(operation),
+  );
   const issues = [];
 
   for (const usage of usages) {
@@ -191,8 +208,8 @@ export function buildAudit(usages) {
       const right = tagNames[second];
       if (normalizedTag(left) !== normalizedTag(right) || left === right) continue;
 
-      const leftUsages = usages.filter(({ tag }) => tag === left);
-      const rightUsages = usages.filter(({ tag }) => tag === right);
+      const leftUsages = tagUsages.filter(({ tag }) => tag === left);
+      const rightUsages = tagUsages.filter(({ tag }) => tag === right);
       const screenNames = new Set([...leftUsages, ...rightUsages].map(({ screen }) => screen));
       if (screenNames.size < 2) continue;
 
@@ -215,6 +232,8 @@ export function buildAudit(usages) {
       usages: screenUsages,
     })),
     usages,
+    tagUsages,
+    clears,
     issues,
   };
 }
@@ -232,7 +251,10 @@ export async function analyzeAia(input) {
   );
 
   if (usages.length === 0) {
-    throw analysisError("no_literal_tags", "No literal TinyDB StoreValue or GetValue tags were found.");
+    throw analysisError(
+      "no_literal_tags",
+      "No supported TinyDB StoreValue, GetValue, ClearTag, or ClearAll calls were found.",
+    );
   }
 
   return buildAudit(usages);

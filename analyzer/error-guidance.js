@@ -6,7 +6,7 @@ const guidance = {
   unsupported_compression:
     "This .aia uses archive compression that this browser can't open. Re-export it from App Inventor, or try the latest Chrome or Edge.",
   no_literal_tags:
-    "We opened the project, but found no literal TinyDB StoreValue or GetValue tags to map. If your tags use variables or text joins, review them manually because this audit doesn't analyze dynamic tags yet.",
+    "We opened the project, but found no supported TinyDB StoreValue, GetValue, ClearTag, or ClearAll calls to map. If your tags or components are built dynamically, review them manually because this audit doesn't resolve runtime values yet.",
 };
 
 export function auditErrorCode(error) {

@@ -56,11 +56,12 @@ function escapeHtml(value) {
 }
 
 function renderAudit(audit, projectName, runId, source) {
-  const tagCount = new Set(audit.usages.map(({ tag }) => tag)).size;
+  const tagCount = new Set(audit.tagUsages.map(({ tag }) => tag)).size;
   overview.innerHTML = `
     <div><strong>${audit.screens.length}</strong><span>Screens mapped</span></div>
     <div><strong>${tagCount}</strong><span>Tag spellings</span></div>
     <div><strong>${audit.issues.length}</strong><span>Likely mismatch</span></div>
+    <div><strong>${audit.clears.length}</strong><span>Clear calls</span></div>
   `;
 
   screenList.innerHTML = audit.screens
@@ -74,12 +75,26 @@ function renderAudit(audit, projectName, runId, source) {
           <ul>
             ${screen.usages
               .map(
-                (usage) => `
+                (usage) => {
+                  const operationLabels = {
+                    store: "Store value",
+                    get: "Get value",
+                    clear_tag: "Clear tag",
+                    clear_all: "Clear all",
+                  };
+                  const displayTag =
+                    usage.operation === "clear_all" ? "All stored tags" : usage.tag;
+
+                  return `
                   <li>
-                    <code>${escapeHtml(usage.tag)}</code>
-                    <span class="operation operation-${usage.operation}">${usage.operation === "store" ? "Store value" : "Get value"}</span>
+                    <code>${escapeHtml(displayTag)}</code>
+                    <span class="operation-detail">
+                      <span class="operation operation-${usage.operation}">${operationLabels[usage.operation]}</span>
+                      <span class="component-name">${escapeHtml(usage.component)}</span>
+                    </span>
                   </li>
-                `,
+                `;
+                },
               )
               .join("")}
           </ul>
@@ -143,7 +158,7 @@ async function runAudit(buffer, projectName, source) {
       route: window.location.pathname,
       source,
       screens_mapped: audit.screens.length,
-      tag_spellings: new Set(audit.usages.map(({ tag }) => tag)).size,
+      tag_spellings: new Set(audit.tagUsages.map(({ tag }) => tag)).size,
       likely_mismatches: audit.issues.length,
     });
     captureRealProjectCompleted(runId, {

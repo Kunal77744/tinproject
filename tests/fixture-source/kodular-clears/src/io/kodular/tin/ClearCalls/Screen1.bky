@@ -1,0 +1,18 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="get-profile">
+    <mutation component_type="TinyDB" method_name="GetValue" is_generic="false" instance_name="Tiny_DB1"></mutation>
+    <value name="ARG0"><block type="text"><field name="TEXT">profile_name</field></block></value>
+    <value name="ARG1"><block type="text"><field name="TEXT">Unknown</field></block></value>
+    <next>
+      <block type="component_method" id="clear-profile">
+        <mutation component_type="TinyDB" method_name="ClearTag" is_generic="false" instance_name="Tiny_DB1"></mutation>
+        <value name="ARG0"><block type="text"><field name="TEXT">profile_name</field></block></value>
+        <next>
+          <block type="component_method" id="clear-kodular-store">
+            <mutation component_type="TinyDB" method_name="ClearAll" is_generic="false" instance_name="Tiny_DB1"></mutation>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

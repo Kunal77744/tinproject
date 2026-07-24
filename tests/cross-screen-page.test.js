@@ -25,7 +25,7 @@ test("cross-screen guide states the analyzer boundaries", async () => {
   assert.match(html, /tags assembled from text blocks/);
   assert.match(html, /value types/);
   assert.match(html, /default\s+values/);
-  assert.match(html, /ClearTag or ClearAll/);
+  assert.match(html, /ClearTag and ClearAll/);
   assert.match(html, /does not claim full Kodular compatibility/);
   assert.match(
     html,

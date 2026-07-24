@@ -1,0 +1,13 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="component_method" id="store-session">
+    <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="StoreValue" is_generic="false"></mutation>
+    <value name="ARG0"><block type="text"><field name="TEXT">session_token</field></block></value>
+    <value name="ARG1"><block type="text"><field name="TEXT">abc123</field></block></value>
+    <next>
+      <block type="component_method" id="clear-session">
+        <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="ClearTag" is_generic="false"></mutation>
+        <value name="ARG0"><block type="text"><field name="TEXT">session_token</field></block></value>
+      </block>
+    </next>
+  </block>
+</xml>

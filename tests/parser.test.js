@@ -19,6 +19,7 @@ import {
   shouldOfferLocalAudit,
   SUPPORT_ADDRESS,
 } from "../analyzer/result-actions.js";
+import { createStoredZip } from "./fixture-archive.js";
 
 const screenOne = `
   <xml xmlns="https://developers.google.com/blockly/xml">
@@ -58,6 +59,7 @@ test("extracts literal TinyDB operations from App Inventor blocks", () => {
   assert.deepEqual(extractTinyDbUsage(screenOne, "Screen1"), [
     {
       screen: "Screen1",
+      component: "TinyDB",
       tag: "profile_name",
       operation: "store",
       defaultValue: null,
@@ -68,6 +70,7 @@ test("extracts literal TinyDB operations from App Inventor blocks", () => {
   assert.deepEqual(extractTinyDbUsage(screenTwo, "Screen2"), [
     {
       screen: "Screen2",
+      component: "TinyDB",
       tag: "profile-name",
       operation: "get",
       defaultValue: "Unknown",
@@ -80,6 +83,7 @@ test("extracts every TinyDB operation in a chained block stack", () => {
   assert.deepEqual(extractTinyDbUsage(chainedTinyDbCalls, "DeviceSetup"), [
     {
       screen: "DeviceSetup",
+      component: "TinyDB",
       tag: "ID",
       operation: "store",
       defaultValue: null,
@@ -87,10 +91,51 @@ test("extracts every TinyDB operation in a chained block stack", () => {
     },
     {
       screen: "DeviceSetup",
+      component: "TinyDB",
       tag: "PW",
       operation: "store",
       defaultValue: null,
       blockId: "store-password",
+    },
+  ]);
+});
+
+test("extracts static ClearTag and ClearAll calls without guessing dynamic tags", () => {
+  const clearCalls = `
+    <xml xmlns="https://developers.google.com/blockly/xml">
+      <block type="component_method" id="clear-profile">
+        <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="ClearTag" />
+        <value name="ARG0"><block type="text"><field name="TEXT">profile_name</field></block></value>
+        <next>
+          <block type="component_method" id="clear-dynamic">
+            <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="ClearTag" />
+            <value name="ARG0"><block type="lexical_variable_get"><field name="VAR">tagName</field></block></value>
+            <next>
+              <block type="component_method" id="clear-everything">
+                <mutation component_type="TinyDB" instance_name="TinyDB2" method_name="ClearAll" />
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </xml>`;
+
+  assert.deepEqual(extractTinyDbUsage(clearCalls, "Settings"), [
+    {
+      screen: "Settings",
+      component: "TinyDB1",
+      tag: "profile_name",
+      operation: "clear_tag",
+      defaultValue: null,
+      blockId: "clear-profile",
+    },
+    {
+      screen: "Settings",
+      component: "TinyDB2",
+      tag: null,
+      operation: "clear_all",
+      defaultValue: null,
+      blockId: "clear-everything",
     },
   ]);
 });
@@ -118,6 +163,102 @@ test("opens the representative .aia sample and finds the known mismatch", async 
   assert.deepEqual(audit.screens.map(({ name }) => name), ["Screen1", "Screen2"]);
   assert.deepEqual(audit.usages.map(({ tag }) => tag), ["profile_name", "profile-name"]);
   assert.equal(audit.issues.length, 1);
+});
+
+test("finds destructive clears in an App Inventor .aia regression fixture", async () => {
+  const [screen1, screen2, project] = await Promise.all([
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-clears/src/appinventor/ai_tin/ClearCalls/Screen1.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-clears/src/appinventor/ai_tin/ClearCalls/Screen2.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/app-inventor-clears/youngandroidproject/project.properties",
+        import.meta.url,
+      ),
+    ),
+  ]);
+  const fixture = createStoredZip([
+    ["src/appinventor/ai_tin/ClearCalls/Screen1.bky", screen1],
+    ["src/appinventor/ai_tin/ClearCalls/Screen2.bky", screen2],
+    ["youngandroidproject/project.properties", project],
+  ]);
+  const audit = await analyzeAia(fixture);
+
+  assert.equal(audit.clears.length, 2);
+  assert.deepEqual(
+    audit.clears.map(({ screen, component, tag, operation }) => ({
+      screen,
+      component,
+      tag,
+      operation,
+    })),
+    [
+      {
+        screen: "Screen1",
+        component: "TinyDB1",
+        tag: "session_token",
+        operation: "clear_tag",
+      },
+      {
+        screen: "Screen2",
+        component: "TinyDB2",
+        tag: null,
+        operation: "clear_all",
+      },
+    ],
+  );
+});
+
+test("finds destructive clears in a standard io.kodular .aia regression fixture", async () => {
+  const [screen, project] = await Promise.all([
+    readFile(
+      new URL(
+        "./fixture-source/kodular-clears/src/io/kodular/tin/ClearCalls/Screen1.bky",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "./fixture-source/kodular-clears/youngandroidproject/project.properties",
+        import.meta.url,
+      ),
+    ),
+  ]);
+  const fixture = createStoredZip([
+    ["src/io/kodular/tin/ClearCalls/Screen1.bky", screen],
+    ["youngandroidproject/project.properties", project],
+  ]);
+  const audit = await analyzeAia(fixture);
+
+  assert.equal(audit.clears.length, 2);
+  assert.deepEqual(
+    audit.clears.map(({ component, tag, operation }) => ({
+      component,
+      tag,
+      operation,
+    })),
+    [
+      {
+        component: "Tiny_DB1",
+        tag: "profile_name",
+        operation: "clear_tag",
+      },
+      {
+        component: "Tiny_DB1",
+        tag: null,
+        operation: "clear_all",
+      },
+    ],
+  );
 });
 
 test("records one completion event for each successful audit run", () => {
@@ -461,13 +602,14 @@ test("turns a clean literal-tag audit into an honest next-step checklist", () =>
   assert.equal(audit.issues.length, 0);
   assert.equal(result.title, "Next-step checklist");
   assert.match(result.intro, /manual checks/);
-  assert.equal(manualItems.length, 3);
+  assert.equal(manualItems.length, 2);
   assert.match(result.items[0].detail, /literal TinyDB StoreValue and GetValue tags across 2 screens/);
   assert.match(result.items[0].detail, /does not guarantee the project is bug-free/);
+  assert.equal(result.items[1].title, "Static clear-call check complete");
+  assert.match(result.items[1].detail, /no standard TinyDB ClearTag or ClearAll calls/);
   assert.match(manualItems[0].detail, /variables or text joins/);
   assert.match(manualItems[0].detail, /Dynamic tag values are not analyzed/);
   assert.match(manualItems[1].title, /value types and defaults/i);
-  assert.match(manualItems[2].detail, /ClearTag and ClearAll/);
 });
 
 test("keeps mismatch repair results unchanged", () => {
@@ -493,10 +635,44 @@ test("copies the same clean-result guidance shown on screen", () => {
   const summary = createRepairSummary(audit);
 
   assert.match(summary, /Literal tag naming check complete/);
+  assert.match(summary, /Static clear-call check complete/);
   assert.match(summary, /Check tags built at runtime/);
   assert.match(summary, /Check value types and defaults/);
-  assert.match(summary, /Check destructive clears/);
   assert.match(summary, /does not guarantee the project is bug-free/);
+});
+
+test("shows careful ClearTag and ClearAll warnings in the result and copied summary", () => {
+  const audit = buildAudit([
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(
+      `
+        <xml xmlns="https://developers.google.com/blockly/xml">
+          <block type="component_method" id="clear-profile">
+            <mutation component_type="TinyDB" instance_name="TinyDB1" method_name="ClearTag" />
+            <value name="ARG0"><block type="text"><field name="TEXT">profile_name</field></block></value>
+            <next>
+              <block type="component_method" id="clear-all">
+                <mutation component_type="TinyDB" instance_name="TinyDB2" method_name="ClearAll" />
+              </block>
+            </next>
+          </block>
+        </xml>`,
+      "Settings",
+    ),
+  ]);
+  const result = createAuditResult(audit);
+  const summary = createRepairSummary(audit);
+
+  assert.equal(result.title, "Clear-call review");
+  assert.match(result.items[1].title, /profile_name/);
+  assert.match(result.items[1].detail, /Settings uses TinyDB1\.ClearTag/);
+  assert.match(result.items[1].detail, /removes that tag's stored value/);
+  assert.match(result.items[1].detail, /cannot determine when the block runs or whether the clear is a bug/);
+  assert.match(result.items[2].title, /TinyDB2\.ClearAll on Settings/);
+  assert.match(result.items[2].detail, /remove every tag/);
+  assert.match(result.items[2].detail, /current store or namespace/);
+  assert.match(summary, /Settings uses TinyDB1\.ClearTag/);
+  assert.match(summary, /Settings uses TinyDB2\.ClearAll/);
 });
 
 test("opens a privacy-safe fuller-report email draft in the managed inbox", () => {
@@ -569,7 +745,7 @@ test("maps unrecognized audit failures to an allow-listed fallback code", () => 
 test("does not imply a project is bug-free when no literal tags are found", () => {
   const message = guidanceForAuditError({ code: "no_literal_tags" });
 
-  assert.match(message, /no literal TinyDB StoreValue or GetValue tags/);
-  assert.match(message, /variables or text joins/);
-  assert.match(message, /doesn't analyze dynamic tags yet/);
+  assert.match(message, /no supported TinyDB StoreValue, GetValue, ClearTag, or ClearAll calls/);
+  assert.match(message, /tags or components are built dynamically/);
+  assert.match(message, /doesn't resolve runtime values yet/);
 });
