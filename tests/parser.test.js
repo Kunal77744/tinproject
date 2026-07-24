@@ -13,6 +13,7 @@ import {
   createRealProjectCompletionTracker,
 } from "../analyzer/telemetry.js";
 import {
+  createAuditResult,
   createFullReportMailto,
   createRepairSummary,
   shouldOfferLocalAudit,
@@ -444,6 +445,58 @@ test("builds a copyable summary from only the visible repair result", () => {
   assert.match(summary, /^TinyDB repair summary/);
   assert.match(summary, /profile_name/);
   assert.match(summary, /Rerun the browser-only audit/);
+});
+
+test("turns a clean literal-tag audit into an honest next-step checklist", () => {
+  const audit = buildAudit([
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(
+      screenTwo.replace("profile-name", "profile_name"),
+      "Screen2",
+    ),
+  ]);
+  const result = createAuditResult(audit);
+  const manualItems = result.items.filter(({ status }) => status === "manual");
+
+  assert.equal(audit.issues.length, 0);
+  assert.equal(result.title, "Next-step checklist");
+  assert.match(result.intro, /manual checks/);
+  assert.equal(manualItems.length, 3);
+  assert.match(result.items[0].detail, /literal TinyDB StoreValue and GetValue tags across 2 screens/);
+  assert.match(result.items[0].detail, /does not guarantee the project is bug-free/);
+  assert.match(manualItems[0].detail, /variables or text joins/);
+  assert.match(manualItems[0].detail, /Dynamic tag values are not analyzed/);
+  assert.match(manualItems[1].title, /value types and defaults/i);
+  assert.match(manualItems[2].detail, /ClearTag and ClearAll/);
+});
+
+test("keeps mismatch repair results unchanged", () => {
+  const audit = buildAudit([
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(screenTwo, "Screen2"),
+  ]);
+  const result = createAuditResult(audit);
+
+  assert.equal(result.title, "Repair checklist");
+  assert.equal(result.items.length, 1);
+  assert.deepEqual(result.items[0], audit.issues[0]);
+});
+
+test("copies the same clean-result guidance shown on screen", () => {
+  const audit = buildAudit([
+    ...extractTinyDbUsage(screenOne, "Screen1"),
+    ...extractTinyDbUsage(
+      screenTwo.replace("profile-name", "profile_name"),
+      "Screen2",
+    ),
+  ]);
+  const summary = createRepairSummary(audit);
+
+  assert.match(summary, /Literal tag naming check complete/);
+  assert.match(summary, /Check tags built at runtime/);
+  assert.match(summary, /Check value types and defaults/);
+  assert.match(summary, /Check destructive clears/);
+  assert.match(summary, /does not guarantee the project is bug-free/);
 });
 
 test("opens a privacy-safe fuller-report email draft in the managed inbox", () => {
