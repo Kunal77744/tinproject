@@ -29,16 +29,39 @@ test("all TinyDB search pages lead directly to the analyzer", async () => {
 
   assert.match(
     tinydbUi,
-    /href="\/analyzer\/\?source=tinydb-ui"[\s\S]*?Run private audit/,
+    /href="\/analyzer\/\?source=tinydb-ui#export-aia"[\s\S]*?Run private audit/,
   );
   assert.match(
     debuggingGuide,
-    /href="\/analyzer\/\?source=debugging-guide"[\s\S]*?Check my literal tags/,
+    /href="\/analyzer\/\?source=debugging-guide#export-aia"[\s\S]*?Check my literal tags/,
   );
   assert.match(
     crossScreenGuide,
-    /href="\/analyzer\/\?source=cross-screen-guide"[\s\S]*?Check my literal tags/,
+    /href="\/analyzer\/\?source=cross-screen-guide#export-aia"[\s\S]*?Check my literal tags/,
   );
+});
+
+test("search-page audit prompts land on the analyzer export steps", async () => {
+  const [analyzer, tinydbUi, debuggingGuide, crossScreenGuide] = await Promise.all([
+    page("../analyzer/index.html"),
+    page("../tinydb-ui/index.html"),
+    page("../app-inventor-tinydb-not-working/index.html"),
+    page("../app-inventor-tinydb-multiple-screens/index.html"),
+  ]);
+
+  assert.match(analyzer, /id="export-aia"[\s\S]*?Need the \.aia file first\?/);
+  assert.match(
+    analyzer,
+    /Projects → Export selected project \(\.aia\) to my computer/,
+  );
+  assert.match(
+    analyzer,
+    /The file stays in this browser\. TinyDB Inspector never uploads it\./,
+  );
+
+  for (const searchPage of [tinydbUi, debuggingGuide, crossScreenGuide]) {
+    assert.match(searchPage, /href="\/analyzer\/\?source=[^"]+#export-aia"/);
+  }
 });
 
 test("existing search pages link to the dedicated cross-screen repair guide", async () => {
